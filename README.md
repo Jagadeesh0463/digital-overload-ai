@@ -107,8 +107,7 @@ The system:
 
 Step 1 — Clone the repo
 
-    git clone https://github.com/sjagadeesh/digital-overload-ai.git
-    cd digital-overload-ai
+    git clone https://github.com/Jagadeesh0463/digital-overload-ai.git
 
 Step 2 — Create virtual environment
 
