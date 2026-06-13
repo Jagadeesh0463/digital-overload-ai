@@ -3,6 +3,10 @@
 
 > **Diagnose overload BEFORE you plan — not after deadlines are missed.**
 
+🌐 **Live App:** https://digital-overload-ai.streamlit.app
+
+📂 **GitHub:** https://github.com/Jagadeesh0463/digital-overload-ai
+
 ---
 
 ## Project Title & Overview
