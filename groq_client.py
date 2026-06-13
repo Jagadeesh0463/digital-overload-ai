@@ -6,7 +6,14 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-client = Groq(api_key=os.environ.get("GROQ_API_KEY", ""))
+def get_api_key():
+    try:
+        import streamlit as st
+        return st.secrets["GROQ_API_KEY"]
+    except:
+        return os.environ.get("GROQ_API_KEY", "")
+
+client = Groq(api_key=get_api_key())
 
 PROMPT = """You are a student workload analyzer. Read the student's description and extract data.
 
