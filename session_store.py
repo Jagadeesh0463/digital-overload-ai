@@ -2,12 +2,18 @@ import streamlit as st
 from datetime import datetime
 
 
-def init_history():
+def init_history() -> None:
+    """Initialise the session history list if not already present in session state."""
     if "history" not in st.session_state:
         st.session_state["history"] = []
 
 
-def add_to_history(result: dict):
+def add_to_history(result: dict) -> None:
+    """Add a completed analysis result to the session history (capped at 5 entries).
+
+    Args:
+        result: dict containing keys: scores (dict), action (str), input_text (str).
+    """
     init_history()
     entry = {
         "timestamp":      datetime.now().strftime("%I:%M %p"),
@@ -25,5 +31,10 @@ def add_to_history(result: dict):
 
 
 def get_history() -> list:
+    """Return the current session history list (up to 5 most recent analyses).
+
+    Returns:
+        List of history entry dicts, newest first.
+    """
     init_history()
     return st.session_state["history"]

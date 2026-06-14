@@ -6,11 +6,19 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_api_key():
+def get_api_key() -> str:
+    """Retrieve the Groq API key from Streamlit secrets or environment variable.
+
+    Tries st.secrets first (Streamlit Cloud deployment), then falls back to
+    the GROQ_API_KEY environment variable (local .env or CI).
+
+    Returns:
+        API key string, or empty string if not found.
+    """
     try:
         import streamlit as st
         return st.secrets["GROQ_API_KEY"]
-    except:
+    except Exception:
         return os.environ.get("GROQ_API_KEY", "")
 
 client = Groq(api_key=get_api_key())
@@ -46,6 +54,23 @@ Student description:
 
 
 def extract_features(text: str, retries: int = 3) -> dict:
+    """Extract structured workload features from free-text input using Groq LLM.
+
+    Sends the student's natural-language description to Llama 3.3 70B and
+    parses the structured JSON response into a feature dictionary.
+
+    Args:
+        text: free-text workload description from the student.
+        retries: number of API retry attempts on failure (default 3).
+
+    Returns:
+        dict with keys: task_count, urgency_signals, unique_domains,
+        context_switches, pending_messages, energy_level, free_hours,
+        estimated_hours, start_time, tasks (list of task dicts).
+
+    Raises:
+        ValueError: if all retry attempts fail.
+    """
     for attempt in range(retries):
         try:
             response = client.chat.completions.create(

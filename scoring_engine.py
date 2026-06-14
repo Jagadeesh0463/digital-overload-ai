@@ -2,26 +2,78 @@ from utils import FEATURE_CAPS, ENERGY_NORM, ENERGY_MULT, OVERLOAD_LABELS, AFI_L
 
 
 def normalise(features: dict) -> dict:
-    normed = {}
+    """Normalise raw feature values to [0, 1] range using per-feature caps.
+
+    Also computes derived normalised values:
+    - energy_norm: maps energy level string to a 0–1 float
+    - time_pressure_norm: how much estimated work exceeds available time (0=under, 1=2x over)
+
+    Args:
+        features: raw feature dict from Groq extraction.
+
+    Returns:
+        normed: dict of normalised values used by scoring functions.
+    """
+    normed: dict = {}
     for key, cap in FEATURE_CAPS.items():
         raw = float(features.get(key, 0))
         clamped = min(raw, cap)
         normed[key + "_norm"] = clamped / cap
+
     normed["energy_level"] = features.get("energy_level", "Medium")
-    normed["energy_norm"] = ENERGY_NORM.get(normed["energy_level"], 0.6)
+    normed["energy_norm"]  = ENERGY_NORM.get(normed["energy_level"], 0.6)
+
+    # Time pressure: 0 when est <= free, 1 when est >= 2× free
+    free = float(features.get("free_hours", 1))
+    est  = float(features.get("estimated_hours", 0))
+    if est == 0:
+        normed["time_pressure_norm"] = 0.0
+    elif free == 0:
+        normed["time_pressure_norm"] = 1.0
+    else:
+        normed["time_pressure_norm"] = min(max((est / free) - 1.0, 0.0), 1.0)
+
     return normed
 
 
 def overload_score(normed: dict) -> float:
+    """Compute Overload Score (0–100) from normalised features.
+
+    Weights:
+        task_count      × 0.25  — volume of pending tasks
+        urgency_signals × 0.30  — deadline pressure
+        (1 - energy)    × 0.20  — fatigue penalty
+        time_pressure   × 0.25  — how far estimated work exceeds free hours
+
+    Args:
+        normed: output of normalise().
+
+    Returns:
+        Overload score clamped to [0, 100].
+    """
     score = (
-        normed["task_count_norm"]      * 0.35 +
-        normed["urgency_signals_norm"] * 0.35 +
-        (1 - normed["energy_norm"])    * 0.30
+        normed["task_count_norm"]      * 0.25 +
+        normed["urgency_signals_norm"] * 0.30 +
+        (1 - normed["energy_norm"])    * 0.20 +
+        normed["time_pressure_norm"]   * 0.25
     ) * 100
     return round(min(score, 100), 1)
 
 
 def afi_score(normed: dict) -> float:
+    """Compute Attention Fragmentation Index (0–100) from normalised features.
+
+    Weights:
+        unique_domains    × 0.50  — breadth of task domains (Academic/Social/Admin/Personal)
+        context_switches  × 0.30  — number of mid-session topic switches
+        pending_messages  × 0.20  — communication load adding cognitive interruption
+
+    Args:
+        normed: output of normalise().
+
+    Returns:
+        AFI score clamped to [0, 100].
+    """
     score = (
         normed["unique_domains_norm"]   * 0.50 +
         normed["context_switches_norm"] * 0.30 +
@@ -31,6 +83,20 @@ def afi_score(normed: dict) -> float:
 
 
 def capacity_fit(features: dict, normed: dict) -> float:
+    """Compute Capacity Fit percentage (0–100%).
+
+    Formula: (free_hours / estimated_hours) × energy_multiplier × 100
+
+    Energy multipliers: High=1.0, Medium=0.75, Low=0.5 — because low energy
+    reduces effective working capacity even within the available hours.
+
+    Args:
+        features: raw feature dict.
+        normed: output of normalise() (used for energy level).
+
+    Returns:
+        Capacity Fit score clamped to [0, 100].
+    """
     free = float(features.get("free_hours", 1))
     est  = float(features.get("estimated_hours", 1))
     if est == 0:
@@ -41,6 +107,15 @@ def capacity_fit(features: dict, normed: dict) -> float:
 
 
 def get_label(score: float, label_table: list) -> str:
+    """Map a numeric score to a label string using a descending threshold table.
+
+    Args:
+        score: numeric value to classify.
+        label_table: list of (threshold, label) pairs, sorted highest first.
+
+    Returns:
+        The label string for the first threshold the score meets or exceeds.
+    """
     for threshold, label in label_table:
         if score >= threshold:
             return label
@@ -48,6 +123,18 @@ def get_label(score: float, label_table: list) -> str:
 
 
 def run_scoring(features: dict) -> dict:
+    """Run the full 3-score diagnostic pipeline on extracted features.
+
+    Args:
+        features: dict with keys: task_count, urgency_signals, unique_domains,
+                  context_switches, pending_messages, free_hours,
+                  estimated_hours, energy_level.
+
+    Returns:
+        dict with keys: overload, afi, capacity (floats),
+        overload_label, afi_label, capacity_label (strings),
+        and normed (dict of normalised input values).
+    """
     normed   = normalise(features)
     overload = overload_score(normed)
     afi      = afi_score(normed)

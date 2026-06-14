@@ -2,6 +2,17 @@ from utils import DOMAIN_PRIORITY, DOMAIN_COLORS
 
 
 def parse_start_time(start_time_str: str) -> float:
+    """Convert a start-time string to a 24-hour float (e.g. "9 PM" → 21.0).
+
+    Handles AM/PM strings and the special value "Now" (uses current hour).
+    Defaults to 18.0 (6 PM) if parsing fails.
+
+    Args:
+        start_time_str: string like "9 AM", "10 PM", or "Now".
+
+    Returns:
+        Hour as a float in 24-hour format.
+    """
     s = start_time_str.strip().upper()
     try:
         if "AM" in s:
@@ -20,6 +31,14 @@ def parse_start_time(start_time_str: str) -> float:
 
 
 def format_hour(hour_float: float) -> str:
+    """Convert a 24-hour float to a 12-hour AM/PM display string.
+
+    Args:
+        hour_float: hour in 24-hour format, e.g. 13.5 → "1:30 PM".
+
+    Returns:
+        Formatted time string like "9:00 AM" or "1:30 PM".
+    """
     hour_float = hour_float % 24
     h = int(hour_float)
     m = int((hour_float - h) * 60)
@@ -32,6 +51,21 @@ def format_hour(hour_float: float) -> str:
 
 def build_day_plan(tasks: list, free_hours: float,
                    energy_level: str, start_time_str: str) -> list:
+    """Build a domain-grouped time-block schedule from extracted tasks.
+
+    Tasks are sorted by domain priority (Academic → Admin → Social → Personal).
+    Block length is adjusted by energy level: Low=60 min, Medium=75, High=90.
+    A 15-minute break is inserted after each task block.
+
+    Args:
+        tasks: list of task dicts with keys: name, domain, hours.
+        free_hours: total available hours for scheduling.
+        energy_level: "High", "Medium", or "Low" — controls block duration.
+        start_time_str: string like "9 AM", "8 PM", or "Now".
+
+    Returns:
+        List of time-block dicts with keys: time, domain, activity, duration, color.
+    """
     if not tasks:
         return []
 
