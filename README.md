@@ -1,7 +1,14 @@
 # 🧠 Digital Overload AI
-### Intelligent Attention & Task Overload Analyzer
+### AI-Powered Student Workload Intelligence Platform
 
-> **Diagnose overload BEFORE you plan — not after deadlines are missed.**
+> **Understand your workload pressure before your day falls apart — not after.**
+
+[![Run Tests](https://github.com/Jagadeesh0463/digital-overload-ai/actions/workflows/tests.yml/badge.svg)](https://github.com/Jagadeesh0463/digital-overload-ai/actions/workflows/tests.yml)
+![Tests](https://img.shields.io/badge/tests-32%20passed-22c55e?style=flat-square)
+![Python](https://img.shields.io/badge/python-3.11+-3b82f6?style=flat-square)
+![Streamlit](https://img.shields.io/badge/streamlit-1.58-ff4b4b?style=flat-square)
+![Groq](https://img.shields.io/badge/groq-llama--3.3--70b-f97316?style=flat-square)
+![License](https://img.shields.io/badge/license-MIT-64748b?style=flat-square)
 
 🌐 **Live App:** https://digital-overload-ai.streamlit.app
 
@@ -9,134 +16,163 @@
 
 ---
 
-## Project Title & Overview
+## Overview
 
-**Title:** Digital Overload AI – Intelligent Attention & Task Overload Analyzer
+Digital Overload AI is an AI-assisted workload analysis platform designed to help students
+understand task pressure, fragmented attention, and planning risk before committing to their day.
 
-**Description:**
-An AI-powered system that helps college students understand and reduce digital overload
-by analyzing their daily task descriptions, notifications, messages, and to-do inputs.
-The system identifies patterns of overload, fragmented attention, and unrealistic task
-planning, and provides structured insights to improve focus and prioritization.
+The platform converts natural-language workload descriptions into measurable diagnostics
+and provides structured prioritization recommendations — powered by Groq's Llama 3.3 70B model.
 
-The project addresses a growing issue where students feel constantly busy but struggle
-to make meaningful progress due to excessive digital inputs.
+**Problem it solves:** Students often feel constantly busy but fail to make meaningful progress
+due to excessive context switching, unrealistic scheduling, and fragmented digital attention.
+This platform makes those hidden patterns visible and actionable.
 
-**Target Users:**
-College students and early-stage learners who feel overwhelmed by notifications,
-assignments, messages, and multiple commitments, leading to poor focus and stress.
-
-**Key Value Proposition:**
-Helps users recognize hidden overload patterns and restructure tasks realistically,
-improving focus, clarity, and productivity without adding more tools or reminders.
-
-**Scope:**
-MVP focuses on analyzing text-based task lists, daily plans, and message summaries
-to detect overload signals and suggest structured prioritization.
-Future scope includes habit trend analysis and weekly overload reports.
-
-**Assumptions:**
-Users provide honest descriptions of their daily tasks, commitments, and digital
-interactions in text form.
+**Target users:** College students juggling assignments, club commitments, messages, and
+personal tasks with limited available hours.
 
 ---
 
-## Example Use Case
+## Unique Contributions
 
-A student inputs their daily plan:
+This project introduces three original metrics not commonly found in productivity tools:
 
-- Classes
-- Assignments
-- Club work
-- Messages to respond to
-- Personal commitments
-
-The system:
-
-- Identifies excessive context switching
-- Flags unrealistic scheduling
-- Suggests a more balanced task structure
-- Highlights what truly needs attention today
+- **Attention Fragmentation Index (AFI)** — measures cognitive scatter caused by switching
+  between unrelated task domains (Academic, Social, Admin, Personal)
+- **Capacity Fit** — checks whether planned work realistically fits available time and energy
+- **Overload Prediction Engine (OPE)** — pre-acceptance check: would saying yes to one more
+  task push you into overload?
+- **16-Row Recommendation Rule Matrix** — deterministic mapping of every score combination
+  to a Focus / Defer / Split / Reduce strategy
+- **AI-powered feature extraction** — Groq LLM extracts 8 structured signals from free-text input
+- **Multi-score workload assessment** — three independent scores give a complete picture
 
 ---
 
 ## Key Features
 
-- **3-Score Diagnostic System** — Overload Score + AFI + Capacity Fit
-- **Attention Fragmentation Index (AFI)** — original metric measuring cognitive domain switching
-- **Overload Prediction Engine (OPE)** — pre-acceptance check before saying yes to new tasks
-- **16-Row Recommendation Rule Matrix** — maps every score combination to Focus / Defer / Split / Reduce
-- **Time-Block Day Planner** — groups tasks by domain into structured hour blocks
-- **3 Demo Profiles** — Try Priya, Ravi, Divya with one click
-- **Session History** — tracks last 5 analyses in the same session
+- **3-Score Diagnostic** — Overload Score + AFI + Capacity Fit computed independently
+- **Detected Overload Signals** — pattern identification across task volume, messages, energy, capacity
+- **AI Analysis Summary** — natural-language explanation of what's driving the scores
+- **Score Drivers** — per-contributor breakdown showing exactly what pushed each score
+- **Workload vs Capacity** — estimated hours vs available hours with gap analysis
+- **Top Priorities + Safe to Defer** — AI-sorted task recommendations
+- **Time-Block Day Planner** — domain-grouped schedule with energy-adjusted block lengths
+- **OPE Alert** — real-time overload prediction before accepting new tasks
+- **Session History** — last 5 analyses tracked within session
+- **3 Demo Profiles** — one-click student scenarios
 
 ---
 
 ## Tech Stack
 
-| Layer        | Technology              |
-|--------------|-------------------------|
-| Frontend     | Streamlit               |
-| Backend      | Python 3.11+            |
-| AI / NLP     | Groq API — Llama 3.3 70B|
-| Charts       | Plotly                  |
-| Testing      | pytest (32 tests)       |
-| Deployment   | Streamlit Cloud         |
+| Layer      | Technology                   |
+|------------|------------------------------|
+| Frontend   | Streamlit 1.58               |
+| Backend    | Python 3.11+                 |
+| AI / NLP   | Groq API — Llama 3.3 70B     |
+| Charts     | Plotly                       |
+| Testing    | pytest — 32 tests            |
+| Deployment | Streamlit Cloud              |
+
+---
+
+## Architecture
+
+```
+User Input (natural language)
+        ↓
+Groq Llama 3.3 70B
+        ↓
+Signal Extraction (8 features)
+        ↓
+┌───────────────────────────────┐
+│         Scoring Engine        │
+│  Overload │ AFI │ Capacity    │
+└───────────────────────────────┘
+        ↓
+16-Row Recommendation Matrix
+        ↓
+Action Plan + Day Planner
+        ↓
+Dashboard (Streamlit)
+```
 
 ---
 
 ## Project Structure
 
-    digital-overload-ai/
-    ├── app.py                   Main Streamlit dashboard
-    ├── groq_client.py           Groq AI — extracts 8 features from plain text
-    ├── scoring_engine.py        Overload, AFI, Capacity Fit formulas
-    ├── recommender.py           16-row rule matrix + action plan generator
-    ├── day_planner.py           Domain-grouped time-block schedule builder
-    ├── session_store.py         Session history — last 5 analyses
-    ├── utils.py                 Constants, thresholds, colour maps
-    ├── tests/
-    │   ├── test_scoring.py      13 unit tests for scoring formulas
-    │   └── test_recommender.py  19 unit tests for rule matrix
-    ├── docs/
-    │   ├── PROJECT_OVERVIEW.md  Deep explanation of all concepts
-    │   ├── SAMPLE_INPUTS.md     3 student personas with expected outputs
-    │   └── EXTENSION_IDEAS.md   Future upgrade paths with code
-    ├── requirements.txt
-    └── .env.example
+```
+digital-overload-ai/
+├── app.py                   Main Streamlit dashboard
+├── groq_client.py           Groq AI — extracts 8 features from plain text
+├── scoring_engine.py        Overload, AFI, Capacity Fit formulas
+├── recommender.py           16-row rule matrix + action plan generator
+├── day_planner.py           Domain-grouped time-block schedule builder
+├── session_store.py         Session history — last 5 analyses
+├── utils.py                 Constants, thresholds, colour maps
+├── tests/
+│   ├── test_scoring.py      13 unit tests for scoring formulas
+│   └── test_recommender.py  19 unit tests for rule matrix
+├── docs/
+│   ├── PROJECT_OVERVIEW.md  Deep explanation of all concepts
+│   ├── SAMPLE_INPUTS.md     3 student personas with expected outputs
+│   └── EXTENSION_IDEAS.md   Future upgrade paths with code
+├── requirements.txt
+└── .env.example
+```
+
+---
+
+## Screenshots
+
+| Input Page | Analysis Results |
+|------------|-----------------|
+| ![Input](docs/screenshots/input.png) | ![Results](docs/screenshots/results.png) |
+
+| Action Plan | Day Planner |
+|-------------|-------------|
+| ![Plan](docs/screenshots/action_plan.png) | ![Day](docs/screenshots/day_planner.png) |
+
+> To add screenshots: run `streamlit run app.py`, take screenshots of each section, and save them to `docs/screenshots/`.
 
 ---
 
 ## How to Run Locally
 
-Step 1 — Clone the repo
+**Step 1 — Clone the repo**
+```bash
+git clone https://github.com/Jagadeesh0463/digital-overload-ai.git
+cd digital-overload-ai
+```
 
-    git clone https://github.com/Jagadeesh0463/digital-overload-ai.git
+**Step 2 — Create virtual environment**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
 
-Step 2 — Create virtual environment
+**Step 3 — Install dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-    python3 -m venv venv
-    source venv/bin/activate
+**Step 4 — Add your Groq API key**
+```bash
+cp .env.example .env
+# Open .env and paste your key:
+# GROQ_API_KEY=your_groq_key_here
+```
 
-Step 3 — Install dependencies
+**Step 5 — Run the app**
+```bash
+streamlit run app.py
+```
 
-    pip install -r requirements.txt
-
-Step 4 — Add your Groq API key
-
-    cp .env.example .env
-
-Open .env and paste your key:
-
-    GROQ_API_KEY=your_groq_key_here
-
-Step 5 — Run the app
-
-    streamlit run app.py
-
-Step 6 — Run all tests
-
-    pytest tests/ -v
+**Step 6 — Run all tests**
+```bash
+pytest tests/ -v
+```
 
 ---
 
@@ -145,42 +181,51 @@ Step 6 — Run all tests
 **Overload Score (0–100)**
 Measures total workload pressure relative to available time and energy.
 
-    Overload = [ (task_count x 0.35) + (urgency x 0.35) + ((1 - energy) x 0.30) ] x 100
+```
+Overload = [ (task_count × 0.35) + (urgency × 0.35) + ((1 - energy) × 0.30) ] × 100
 
-    0-40  = Low
-    41-65 = Moderate
-    66-85 = High
-    86-100 = Critical
+0–40   = Low
+41–65  = Moderate
+66–85  = High
+86–100 = Critical
+```
 
 **Attention Fragmentation Index — AFI (0–100)**
 Original metric measuring cognitive scatter across unrelated task domains.
 
-    AFI = [ (unique_domains x 0.50) + (context_switches x 0.30) + (messages x 0.20) ] x 100
+```
+AFI = [ (unique_domains × 0.50) + (context_switches × 0.30) + (messages × 0.20) ] × 100
 
-    0-35  = Low
-    36-60 = Moderate
-    61-80 = High
-    81-100 = Severe
+0–35   = Low
+36–60  = Moderate
+61–80  = High
+81–100 = Severe
+```
 
 **Capacity Fit (0–100%)**
 Checks whether planned work fits available time and energy.
 
-    Capacity Fit = (free_hours / estimated_hours) x energy_multiplier x 100
+```
+Capacity Fit = (free_hours / estimated_hours) × energy_multiplier × 100
 
-    >= 100% = Good Fit
-    70-99%  = Tight
-    40-69%  = Poor Fit
-    < 40%   = Overcommitted
+≥ 100% = Good Fit
+70–99% = Tight
+40–69% = Poor Fit
+< 40%  = Overcommitted
+```
 
 ---
 
 ## Test Results
 
-    pytest tests/ -v
+```
+pytest tests/ -v
 
-    test_scoring.py      — 13 passed
-    test_recommender.py  — 19 passed
-    Total                — 32 passed in 0.02s
+test_scoring.py      — 13 passed
+test_recommender.py  — 19 passed
+─────────────────────────────────
+Total                — 32 passed in 0.02s
+```
 
 ---
 
@@ -189,18 +234,18 @@ Checks whether planned work fits available time and energy.
 - Results depend on honest self-reported input
 - NOT a medical, psychological, or mental health diagnostic system
 - Scores are estimates from weighted formulas — not exact cognitive measurements
-- Recommendation engine uses a rule matrix, not personalised machine learning
-- Session history resets when browser tab is closed
-- Requires internet connection for Groq API
+- Recommendation engine uses a deterministic rule matrix, not personalised ML
+- Session history resets when the browser tab is closed
+- Requires internet connection for Groq API calls
 
 ---
 
 ## Future Enhancements
 
-- Gmail and Calendar auto-import of commitments
-- Weekly AFI trend reports
-- Mobile app with push notifications
-- ML-based recommendation engine replacing rule matrix
+- Gmail and Calendar auto-import of daily commitments
+- Weekly AFI trend tracking and overload reports
+- Mobile app with push notification support
+- ML-based recommendation engine replacing the rule matrix
 - Persistent history with CSV export
 
 ---
@@ -214,4 +259,4 @@ It is NOT a medical, psychological, or mental health diagnostic system.
 
 ## Author
 
-**S Jagadeesh · Hyderabad · 2026**
+**S Jagadeesh · 2026**
