@@ -223,8 +223,8 @@ Student Input (natural language)
 
 | Layer      | Technology                   |
 |------------|------------------------------|
-| Frontend   | Streamlit 1.58               |
-| Backend    | Python 3.11+                 |
+| Frontend   | Streamlit                    |
+| Backend    | Python                       |
 | AI / NLP   | Groq API — Llama 3.3 70B     |
 | Charts     | Plotly                       |
 | Testing    | pytest — 32 tests            |
@@ -341,6 +341,30 @@ Total                — 32 passed in 0.02s
 - Mobile app with push notification support
 - ML-based recommendation engine replacing the rule matrix
 - Persistent history with CSV export
+
+---
+
+## 📊 Project Metrics
+
+| Metric | Value |
+|--------|-------|
+| Automated Tests | 32 (13 scoring + 19 recommender) |
+| Recommendation Rules | 16 |
+| Extracted Signals | 8 |
+| Diagnostic Scores | 3 |
+| Task Domains | 4 (Academic · Admin · Social · Personal) |
+| AI Planning Engine | 1 (Groq Llama 3.3 70B) |
+
+---
+
+## 🎓 Key Learnings
+
+- **LLM integration** — Using Groq API to extract structured data from free-text input
+- **Explainable AI design** — Combining AI extraction with deterministic, traceable scoring
+- **Rule-based decision systems** — Building a 16-row matrix that maps score combinations to actions
+- **Automated testing** — Writing 32 pytest tests covering edge cases in scoring and recommendations
+- **Streamlit deployment** — Building and deploying a multi-section data app on Streamlit Cloud
+- **Metric design** — Creating original metrics (AFI, OPE, Capacity Fit) from first principles
 
 ---
 

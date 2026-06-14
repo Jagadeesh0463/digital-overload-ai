@@ -355,33 +355,71 @@ def generate_ai_summary(features: dict, scores: dict) -> str:
 
 
 # ── TOP PRIORITIES + SAFE TO DEFER ──
-def get_priorities(tasks: list, action: str) -> tuple:
-    """Split tasks into top priorities and safe-to-defer lists.
+def _priority_reason(task: dict, features: dict) -> str:
+    """Generate a short reason string explaining why a task is high priority.
+
+    Args:
+        task: task dict with keys: name, domain, hours.
+        features: raw feature dict from Groq extraction.
+
+    Returns:
+        Short reason string, e.g. "High urgency · Academic".
+    """
+    domain = task.get("domain", "Academic")
+    hours  = float(task.get("hours", 1.0))
+    name   = task.get("name", "").lower()
+
+    urgency_words = ["due", "tomorrow", "tonight", "today", "urgent", "asap",
+                     "exam", "quiz", "test", "deadline", "submit"]
+    is_urgent = any(w in name for w in urgency_words)
+
+    if is_urgent:
+        return "Due soon"
+    elif hours >= 3:
+        return "High effort · plan ahead"
+    elif domain == "Academic":
+        return "Academic priority"
+    elif domain == "Admin":
+        return "Admin — blocks other work"
+    else:
+        return f"{domain} task"
+
+
+def get_priorities(tasks: list, action: str, features: dict | None = None) -> tuple:
+    """Split tasks into top priorities and safe-to-defer lists with reasoning.
 
     Academic and Admin tasks are treated as high priority.
     Social and Personal tasks are moved to the defer list when action
     is REDUCE or DEFER.
 
     Args:
-        tasks: list of task dicts with keys: name, domain.
+        tasks: list of task dicts with keys: name, domain, hours.
         action: recommendation action string — FOCUS, DEFER, SPLIT, or REDUCE.
+        features: raw feature dict used to generate priority reasons (optional).
 
     Returns:
-        Tuple of (top_priorities[:3], safe_to_defer[:3]) — lists of task name strings.
+        Tuple of (top_priorities[:3], safe_to_defer[:3])
+        where each item is a dict with keys: name, reason.
     """
     from utils import DOMAIN_PRIORITY
+    features = features or {}
     sorted_tasks = sorted(
         tasks,
         key=lambda t: DOMAIN_PRIORITY.index(t.get("domain", "Personal"))
         if t.get("domain", "Personal") in DOMAIN_PRIORITY else 4
     )
-    top   = [t["name"] for t in sorted_tasks if t.get("domain") in ["Academic", "Admin"]][:3]
-    defer = [t["name"] for t in sorted_tasks if t.get("domain") in ["Social", "Personal"]
-             and action in ["REDUCE", "DEFER"]][:3]
+    top_tasks   = [t for t in sorted_tasks if t.get("domain") in ["Academic", "Admin"]][:3]
+    defer_tasks = [t for t in sorted_tasks if t.get("domain") in ["Social", "Personal"]
+                   and action in ["REDUCE", "DEFER"]][:3]
     # Fill top if less than 3
+    top_names = {t["name"] for t in top_tasks}
     for t in sorted_tasks:
-        if t["name"] not in top and len(top) < 3:
-            top.append(t["name"])
+        if t["name"] not in top_names and len(top_tasks) < 3:
+            top_tasks.append(t)
+            top_names.add(t["name"])
+
+    top   = [{"name": t["name"], "reason": _priority_reason(t, features)} for t in top_tasks]
+    defer = [{"name": t["name"], "reason": f"{t.get('domain','')}"} for t in defer_tasks]
     return top, defer
 
 
@@ -524,7 +562,8 @@ def main():
                     <span style="color:#7dd3fc;font-size:11px;font-weight:800;letter-spacing:2px;">📊 DIAGNOSTICS</span>
                 </div>""", unsafe_allow_html=True)
 
-                # 3 Score Metrics + Progress Bars
+                # 3 Score Metrics in one visual card
+                st.markdown('<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:18px 20px;">', unsafe_allow_html=True)
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.metric("🔥 Overload Score", f"{scores['overload']:.0f} / 100",
@@ -538,6 +577,7 @@ def main():
                     st.metric("⏱️ Capacity Fit", f"{scores['capacity']:.0f}%",
                               colored_label(scores["capacity_label"], "capacity"))
                     st.progress(min(scores["capacity"] / 100, 1.0))
+                st.markdown('</div>', unsafe_allow_html=True)
 
                 # Score Drivers
                 normed = scores["normed"]
@@ -577,17 +617,35 @@ def main():
                         <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Gap: <span style="color:#f97316;font-weight:700;">{"+" if gap > 0 else ""}{gap}h</span></p>
                     </div>""", unsafe_allow_html=True)
 
-                # Detected Signals
+                # Detected Signals — grouped by severity
                 signals = get_overload_signals(features, scores)
                 if signals:
                     st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:14px 0 6px 0;">DETECTED SIGNALS</p>', unsafe_allow_html=True)
-                    for emoji, title, detail in signals:
-                        bc = '#ef4444' if emoji == '🔴' else '#f97316' if emoji == '🟠' else '#eab308'
-                        st.markdown(f"""<div style="background:#1e293b;border-left:4px solid {bc};
-                             border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:5px;">
-                            <span style="color:#f8fafc;font-weight:700;font-size:13px;">{emoji} {title}</span>
-                            <span style="color:#64748b;font-size:12px;"> — {detail}</span>
-                        </div>""", unsafe_allow_html=True)
+                    critical = [(t, d) for e, t, d in signals if e == '🔴']
+                    warning  = [(t, d) for e, t, d in signals if e == '🟠']
+                    attention= [(t, d) for e, t, d in signals if e == '🟡']
+
+                    def _render_group(label: str, color: str, items: list) -> None:
+                        if not items:
+                            return
+                        st.markdown(
+                            f'<p style="color:{color};font-size:10px;font-weight:800;'
+                            f'letter-spacing:1px;margin:8px 0 4px 0;">{label}</p>',
+                            unsafe_allow_html=True,
+                        )
+                        for title, detail in items:
+                            st.markdown(
+                                f'<div style="background:#1e293b;border-left:4px solid {color};'
+                                f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:4px;">'
+                                f'<span style="color:#f8fafc;font-weight:700;font-size:12px;">{title}</span>'
+                                f'<span style="color:#64748b;font-size:11px;"> — {detail}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+
+                    _render_group("🔴 CRITICAL SIGNALS", "#ef4444", critical)
+                    _render_group("🟠 WARNING SIGNALS",  "#f97316", warning)
+                    _render_group("🟡 ATTENTION SIGNALS","#eab308", attention)
 
                 # ═══════════════════════════════════════════
                 # 🧠 ANALYSIS
@@ -597,13 +655,10 @@ def main():
                     <span style="color:#c4b5fd;font-size:11px;font-weight:800;letter-spacing:2px;">🧠 ANALYSIS</span>
                 </div>""", unsafe_allow_html=True)
 
-                # AI Summary
+                # AI Summary — in expander
                 summary = generate_ai_summary(features, scores)
-                st.markdown(f"""<div style="background:linear-gradient(135deg,#1e293b,#0f172a);border:1px solid #334155;
-                     border-left:4px solid #3b82f6;border-radius:0 12px 12px 0;padding:14px 20px;margin-bottom:10px;">
-                    <p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 6px 0;">🧠 AI ANALYSIS SUMMARY</p>
-                    <p style="color:#e2e8f0;font-size:13px;line-height:1.7;margin:0;">{summary}</p>
-                </div>""", unsafe_allow_html=True)
+                with st.expander("🧠 AI Analysis Summary", expanded=True):
+                    st.markdown(f'<p style="color:#e2e8f0;font-size:13px;line-height:1.7;margin:0;">{summary}</p>', unsafe_allow_html=True)
 
                 # Workload vs Capacity visual bars
                 free_h    = features.get("free_hours", 0)
@@ -657,17 +712,28 @@ def main():
                         <p style="color:#94a3b8;font-size:11px;margin:0;">🟢 Above 70% = Healthy &nbsp;·&nbsp; 🔴 Below 40% = Overcommitted</p>
                     </div>""", unsafe_allow_html=True)
 
-                # OPE — directly below Workload vs Capacity
-                ope        = (scores["overload"] > 65 and scores["capacity"] < 70) or scores["afi"] > 80
-                ope_status = "AT CAPACITY" if ope else "MANAGEABLE"
-                ope_color  = "#ef4444" if ope else "#22c55e"
-                st.markdown(f"""<div style="background:#1e293b;border:1px solid {ope_color};border-radius:12px;padding:12px 18px;margin-top:10px;">
+                # OPE — 3-state logic based on Capacity Fit
+                cap_pct = scores["capacity"]
+                afi_val_ope = scores["afi"]
+                if cap_pct < 40 or afi_val_ope > 80:
+                    ope_status  = "🔴 AT CAPACITY"
+                    ope_color   = "#ef4444"
+                    ope_border  = "#ef4444"
+                    ope_message = "⚠️ Do NOT accept any new tasks. Your available time and energy cannot absorb additional load."
+                elif cap_pct < 70 or scores["overload"] > 65:
+                    ope_status  = "🟠 AT RISK"
+                    ope_color   = "#f97316"
+                    ope_border  = "#f97316"
+                    ope_message = "⚡ Proceed carefully. You have minimal buffer — one extra task could tip you into overload."
+                else:
+                    ope_status  = "🟢 MANAGEABLE"
+                    ope_color   = "#22c55e"
+                    ope_border  = "#334155"
+                    ope_message = "✅ Load is within range. You have capacity — monitor scores before accepting new tasks."
+                st.markdown(f"""<div style="background:#1e293b;border:1px solid {ope_border};border-radius:12px;padding:12px 18px;margin-top:10px;">
                     <p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 4px 0;">🔮 OVERLOAD PREDICTION ENGINE (OPE)</p>
                     <p style="color:{ope_color};font-size:15px;font-weight:800;margin:0 0 3px 0;">Status: {ope_status}</p>
-                    <p style="color:#94a3b8;font-size:12px;margin:0;">
-                        {"⚠️ System at capacity. Do NOT accept new tasks — any addition pushes you into critical overload." if ope
-                        else "✅ Load is manageable. You have buffer — monitor scores before accepting new tasks."}
-                    </p>
+                    <p style="color:#94a3b8;font-size:12px;margin:0;">{ope_message}</p>
                 </div>""", unsafe_allow_html=True)
 
                 # ═══════════════════════════════════════════
@@ -700,17 +766,18 @@ def main():
                         )
 
                 # Top Priorities + Safe to Defer
-                top_p, safe_d = get_priorities(tasks, action)
+                top_p, safe_d = get_priorities(tasks, action, features)
                 pr_col, df_col = st.columns(2)
                 with pr_col:
                     st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:12px 0 6px 0;">🎯 TODAY\'S TOP PRIORITIES</p>', unsafe_allow_html=True)
                     if top_p:
-                        for i, t in enumerate(top_p, 1):
+                        for i, item in enumerate(top_p, 1):
                             st.markdown(
                                 f'<div style="background:#1e293b;border-left:4px solid #22c55e;'
-                                f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:5px;">'
-                                f'<span style="color:#22c55e;font-weight:700;font-size:13px;">{i}.</span> '
-                                f'<span style="color:#e2e8f0;font-size:13px;">{t}</span></div>',
+                                f'border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:5px;">'
+                                f'<span style="color:#22c55e;font-weight:700;font-size:13px;">{i}. {item["name"]}</span><br>'
+                                f'<span style="color:#64748b;font-size:11px;">{item["reason"]}</span>'
+                                f'</div>',
                                 unsafe_allow_html=True,
                             )
                     else:
@@ -718,12 +785,13 @@ def main():
                 with df_col:
                     st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:12px 0 6px 0;">🕒 SAFE TO DEFER</p>', unsafe_allow_html=True)
                     if safe_d:
-                        for t in safe_d:
+                        for item in safe_d:
                             st.markdown(
                                 f'<div style="background:#1e293b;border-left:4px solid #475569;'
-                                f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:5px;">'
-                                f'<span style="color:#64748b;">→</span> '
-                                f'<span style="color:#94a3b8;font-size:13px;">{t}</span></div>',
+                                f'border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:5px;">'
+                                f'<span style="color:#94a3b8;font-size:13px;">→ {item["name"]}</span><br>'
+                                f'<span style="color:#64748b;font-size:11px;">{item["reason"]}</span>'
+                                f'</div>',
                                 unsafe_allow_html=True,
                             )
                     elif action in ["REDUCE", "DEFER"]:
