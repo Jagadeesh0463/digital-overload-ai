@@ -189,42 +189,43 @@ def main():
 
     # Header
     st.title("🧠 Digital Overload AI")
-    st.caption("Intelligent Attention & Task Overload Analyzer · Diagnose overload BEFORE you plan · Jagadeesh · 2026")
-    st.caption("⚠️ Disclaimer: This is a workload planning tool only. NOT a medical or mental health diagnostic system.")
+    st.markdown("#### AI-Powered Workload & Focus Analyzer")
+    st.caption("Transform unstructured schedules into actionable daily plans.")
+    st.caption("⚠️ Educational productivity tool only. Results are intended for workload planning and self-reflection, not medical or mental health diagnosis.")
 
     st.markdown("---")
 
     # Input
-    st.markdown("### Describe your tasks, deadlines, messages, and energy level")
-    st.caption("Type naturally — messy is fine. Include: tasks, deadlines, messages pending, energy level, free hours today.")
+    st.markdown("### Describe Your Day")
+    st.caption("Include tasks, deadlines, pending messages, available study hours, and energy level.")
 
     # ── DEMO PROFILES ──
-    st.markdown("**Try a demo profile:**")
+    st.markdown("**Quick Start Examples**")
     col_a, col_b, col_c = st.columns(3)
 
     with col_a:
-        if st.button("👩 Try Priya"):
+        if st.button("😵 Overloaded Student"):
             st.session_state["demo_text"] = """4 assignments due this week — OS on Wednesday, DBMS on Thursday, Web Dev and ML both on Friday. 18 WhatsApp messages from classmates pending. Club meeting tomorrow at 5 PM for 2 hours. Feeling low energy today. Only 3 free hours tonight after 9 PM."""
 
     with col_b:
-        if st.button("👨 Try Ravi"):
+        if st.button("📚 Midterm Crammer"):
             st.session_state["demo_text"] = """5 subject exams in the next 4 days — Computer Networks today, Operating Systems tomorrow, DBMS the day after, then Web Dev and Cloud Computing on day 4. Zero pending messages — switched off notifications completely. Energy is medium. I have about 8 free hours today. No club commitments this week."""
 
     with col_c:
-        if st.button("👩 Try Divya"):
+        if st.button("💼 Club Leader"):
             st.session_state["demo_text"] = """I am in 3 college clubs — Robotics, Cultural Committee, and NSS. All three have events this week. I also have 2 assignments due Friday and a lab record submission on Thursday. About 50 WhatsApp messages unread across 6 groups. Feeling low energy — been staying up late all week. Only 2 free hours today."""
 
     demo_value = st.session_state.get("demo_text", "")
 
     input_text = st.text_area(
         label="input",
-        placeholder="Example: 3 assignments due this week, 18 WhatsApp messages pending, club meeting tomorrow, low energy, only 3 free hours tonight...",
+        placeholder="Example:\n3 assignments due this week.\n18 messages pending.\nClub meeting tomorrow.\nEnergy level: low.\nAvailable time today: 3 hours.",
         height=150,
         label_visibility="collapsed",
         value=demo_value,
     )
 
-    analyze = st.button("🔍 Analyze My Workload", type="primary", width='stretch')
+    analyze = st.button("🔍 Analyze Workload", type="primary", width='stretch')
 
     if analyze and input_text.strip():
         with st.spinner("Analyzing your workload with Groq AI..."):
@@ -277,6 +278,39 @@ def main():
                     st.metric("⏱️ Capacity Fit",
                               f"{scores['capacity']:.0f}%",
                               scores["capacity_label"])
+
+                # ── WHY THIS SCORE ──
+                with st.expander("💡 Why this score?"):
+                    normed = scores["normed"]
+                    from utils import FEATURE_CAPS
+                    task_contrib     = round(normed["task_count_norm"]      * 0.35 * 100)
+                    urgency_contrib  = round(normed["urgency_signals_norm"] * 0.35 * 100)
+                    energy_contrib   = round((1 - normed["energy_norm"])    * 0.30 * 100)
+                    domain_contrib   = round(normed["unique_domains_norm"]  * 0.50 * 100)
+                    switch_contrib   = round(normed["context_switches_norm"]* 0.30 * 100)
+                    msg_contrib      = round(normed["pending_messages_norm"]* 0.20 * 100)
+
+                    st.markdown("**🔥 Overload Score breakdown:**")
+                    st.markdown(
+                        f"- `+{task_contrib}` Task Volume &nbsp;&nbsp;"
+                        f"`+{urgency_contrib}` Deadline Pressure &nbsp;&nbsp;"
+                        f"`+{energy_contrib}` Low Energy Penalty",
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown("**🧩 Attention Fragmentation (AFI) breakdown:**")
+                    st.markdown(
+                        f"- `+{domain_contrib}` Domain Spread &nbsp;&nbsp;"
+                        f"`+{switch_contrib}` Context Switches &nbsp;&nbsp;"
+                        f"`+{msg_contrib}` Communication Load",
+                        unsafe_allow_html=True,
+                    )
+                    free  = features.get("free_hours", 0)
+                    est   = features.get("estimated_hours", 0)
+                    st.markdown("**⏱️ Capacity Fit breakdown:**")
+                    st.markdown(
+                        f"- Free hours: **{free}h** · Estimated work: **{est}h** · "
+                        f"Energy multiplier: **{normed.get('energy_norm', 0.6):.0%}**"
+                    )
 
                 # ── OPE ALERT ──
                 ope = (scores["overload"] > 65 and scores["capacity"] < 70) \
@@ -355,7 +389,7 @@ def main():
 
     # Footer
     st.markdown("---")
-    st.caption("Digital Overload AI · Not a medical tool · Jagadeesh · Hyderabad · 2026")
+    st.caption("Built with Python, Groq API, Streamlit & Pytest · Digital Overload AI · 2026")
 
 
 if __name__ == "__main__":
