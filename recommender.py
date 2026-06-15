@@ -31,7 +31,7 @@ INSTRUCTIONS = {
         "Work in single-task mode — one task at a time, no switching.",
         "Start with the highest-urgency task first.",
         "Turn off all notifications during each work block.",
-        "Use 90-minute focused blocks followed by 15-minute breaks.",
+        "Use focused work blocks (45–90 min depending on energy) with short breaks between tasks.",
         "Your capacity is manageable — protect this state.",
     ],
     "DEFER": [

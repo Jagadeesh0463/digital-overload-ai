@@ -90,13 +90,16 @@ OPE is a **pre-acceptance check**: before saying yes to a new commitment, the sy
 predicts whether your current load can absorb it.
 
 ```
-OPE fires when:
-  Overload Score > 65  AND  Capacity Fit < 70%
-  OR
-  AFI Score > 80 (Severe fragmentation)
+OPE produces one of three states:
 
-Status: AT CAPACITY  → Do NOT accept new tasks today
-Status: MANAGEABLE   → You have buffer — proceed with caution
+  🔴 AT CAPACITY  → Cap < 40%  OR  AFI > 80
+                    Do NOT accept any new tasks. System is at its limit.
+
+  🟠 AT RISK      → Overload > 65  AND  Capacity < 70%
+                    Proceed carefully — one extra task could tip you into overload.
+
+  🟢 MANAGEABLE   → Neither of the above conditions met
+                    Load is within range. Monitor before accepting new tasks.
 ```
 
 Unlike a simple threshold alert, OPE cross-references all three scores simultaneously
@@ -338,6 +341,8 @@ cp .env.example .env
 streamlit run app.py
 ```
 
+> **Note:** The live Streamlit Cloud deployment may take 30–60 seconds to wake up on first visit (cold start). Click "Yes, get this app back up!" if prompted.
+
 **Step 6 — Run all tests**
 ```bash
 pytest tests/ -v
@@ -375,7 +380,6 @@ Total                — 32 passed in 0.02s
 - Weekly AFI trend tracking and overload reports
 - Mobile app with push notification support
 - ML-based recommendation engine replacing the rule matrix
-- Persistent history with CSV export
 
 ---
 
@@ -412,4 +416,4 @@ It is NOT a medical, psychological, or mental health diagnostic system.
 
 ## Author
 
-S Jagadeesh
+**S Jagadeesh** — [GitHub @Jagadeesh0463](https://github.com/Jagadeesh0463)

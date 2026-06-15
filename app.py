@@ -1,8 +1,13 @@
+import io
+import logging
 import os
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -84,7 +89,6 @@ p, .stMarkdown p {
     padding: 12px 20px !important;
     transition: all 0.2s ease !important;
     box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important;
-    width: 100% !important;
 }
 [data-testid="stButton"] button:hover {
     background: linear-gradient(135deg, #1e40af, #2563eb) !important;
@@ -188,37 +192,31 @@ def score_color(score: float, kind: str) -> str:
     return "#64748b"
 
 
-def make_gauge(value: float, label: str, kind: str) -> go.Figure:
-    """Build a Plotly gauge chart for a single score.
+def _dc(val: int, high: str) -> str:
+    """Color a driver contribution by magnitude: high=signal color, mid=muted, low=dim."""
+    if val >= 8: return high
+    if val >= 4: return "#94a3b8"
+    return "#475569"
 
-    Args:
-        value: numeric score (0–100).
-        label: text label shown below the gauge needle.
-        kind: score type — used for colour mapping ("overload", "afi", "capacity").
 
-    Returns:
-        Plotly Figure object ready for st.plotly_chart().
-    """
-    color = score_color(value, kind)
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=value,
-        domain={"x": [0, 1], "y": [0, 1]},
-        title={"text": f"<b>{label}</b>", "font": {"size": 13}},
-        number={"font": {"size": 32}, "suffix": "/100"},
-        gauge={
-            "axis": {"range": [0, 100]},
-            "bar":  {"color": color, "thickness": 0.3},
-            "steps": [
-                {"range": [0,  40],  "color": "#dcfce7"},
-                {"range": [40, 66],  "color": "#fef9c3"},
-                {"range": [66, 86],  "color": "#ffedd5"},
-                {"range": [86, 100], "color": "#fee2e2"},
-            ],
-        }
-    ))
-    fig.update_layout(height=230, margin=dict(t=40, b=10, l=20, r=20))
-    return fig
+def _render_group(label: str, color: str, items: list) -> None:
+    """Render a labelled group of detected signals as styled cards."""
+    if not items:
+        return
+    st.markdown(
+        f'<p style="color:{color};font-size:12px;font-weight:800;'
+        f'letter-spacing:1px;margin:8px 0 4px 0;">{label}</p>',
+        unsafe_allow_html=True,
+    )
+    for title, detail in items:
+        st.markdown(
+            f'<div style="background:#1e293b;border-left:4px solid {color};'
+            f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:4px;">'
+            f'<span style="color:#f8fafc;font-weight:700;font-size:12px;">{title}</span>'
+            f'<span style="color:#64748b;font-size:11px;"> — {detail}</span>'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
 
 
 def make_capacity_chart(free_h: float, est_h: float, cap_status: str) -> go.Figure:
@@ -595,14 +593,12 @@ def main():
         if st.button("💼 Club Leader"):
             st.session_state["demo_text"] = """I am in 3 college clubs — Robotics, Cultural Committee, and NSS. All three have events this week. I also have 2 assignments due Friday and a lab record submission on Thursday. About 50 WhatsApp messages unread across 6 groups. Feeling low energy — been staying up late all week. Only 2 free hours today."""
 
-    demo_value = st.session_state.get("demo_text", "")
-
     input_text = st.text_area(
         label="input",
         placeholder="Example:\n3 assignments due this week.\n18 messages pending.\nClub meeting tomorrow.\nEnergy level: low.\nAvailable time today: 3 hours.",
         height=120,
         label_visibility="collapsed",
-        value=demo_value,
+        key="demo_text",
     )
 
     analyze = st.button("🔍 Analyze Workload", type="primary", width='stretch')
@@ -690,7 +686,7 @@ def main():
                     ope_color   = "#ef4444"
                     ope_border  = "#ef4444"
                     ope_message = "⚠️ Do NOT accept any new tasks. Your available time and energy cannot absorb additional load."
-                elif cap_pct < 70 or scores["overload"] > 65:
+                elif cap_pct < 70 and scores["overload"] > 65:
                     ope_status  = "🟠 AT RISK"
                     ope_color   = "#f97316"
                     ope_border  = "#f97316"
@@ -718,12 +714,6 @@ def main():
                 free            = features.get("free_hours", 0)
                 est             = features.get("estimated_hours", 0)
                 gap             = round(est - free, 1)
-
-                def _dc(val: int, high: str) -> str:
-                    """Color a driver contribution by magnitude: high=signal color, mid=muted, low=dim."""
-                    if val >= 8: return high
-                    if val >= 4: return "#94a3b8"
-                    return "#475569"
 
                 st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:14px 0 6px 0;">SCORE DRIVERS</p>', unsafe_allow_html=True)
                 sd1, sd2, sd3 = st.columns(3)
@@ -760,24 +750,6 @@ def main():
 
                     st.markdown('<div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px 16px;margin-top:10px;">', unsafe_allow_html=True)
                     st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:0 0 8px 0;">DETECTED SIGNALS</p>', unsafe_allow_html=True)
-
-                    def _render_group(label: str, color: str, items: list) -> None:
-                        if not items:
-                            return
-                        st.markdown(
-                            f'<p style="color:{color};font-size:12px;font-weight:800;'
-                            f'letter-spacing:1px;margin:8px 0 4px 0;">{label}</p>',
-                            unsafe_allow_html=True,
-                        )
-                        for title, detail in items:
-                            st.markdown(
-                                f'<div style="background:#1e293b;border-left:4px solid {color};'
-                                f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:4px;">'
-                                f'<span style="color:#f8fafc;font-weight:700;font-size:12px;">{title}</span>'
-                                f'<span style="color:#64748b;font-size:11px;"> — {detail}</span>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
 
                     _render_group("🔴 CRITICAL SIGNALS", "#ef4444", critical)
                     _render_group("🟠 WARNING SIGNALS",  "#f97316", warning)
@@ -977,7 +949,6 @@ def main():
                             )
 
                 # ── CSV EXPORT ──
-                import io
                 export_rows = {
                     "Overload Score":    [f"{scores['overload']:.0f}"],
                     "Overload Label":    [scores["overload_label"]],
@@ -1003,6 +974,7 @@ def main():
                 )
 
             except Exception as e:
+                logger.exception("Analysis failed")
                 st.error(f"Something went wrong: {str(e)}")
                 st.info("Please check your GROQ_API_KEY in the .env file and try again.")
 

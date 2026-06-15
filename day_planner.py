@@ -70,7 +70,8 @@ def parse_start_time(start_time_str: str) -> float:
             return float(hour if hour == 12 else hour + 12)
         elif "NOW" in s:
             from datetime import datetime
-            return float(datetime.now().hour)
+            now = datetime.now()
+            return now.hour + now.minute / 60.0
         else:
             return 18.0
     except Exception:
