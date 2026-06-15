@@ -581,10 +581,10 @@ def main():
 
                 # Score Drivers
                 normed = scores["normed"]
-                task_contrib    = round(normed["task_count_norm"]       * 0.25 * 100)
-                urgency_contrib = round(normed["urgency_signals_norm"]  * 0.30 * 100)
-                energy_contrib  = round((1 - normed["energy_norm"])     * 0.20 * 100)
-                time_contrib    = round(normed.get("time_pressure_norm", 0) * 0.25 * 100)
+                task_contrib    = round(normed["task_count_norm"]            * 0.15 * 100)
+                urgency_contrib = round(normed["urgency_signals_norm"]      * 0.20 * 100)
+                energy_contrib  = round((1 - normed["energy_norm"])         * 0.15 * 100)
+                time_contrib    = round(normed.get("time_pressure_norm", 0) * 0.50 * 100)
                 domain_contrib  = round(normed["unique_domains_norm"]   * 0.50 * 100)
                 switch_contrib  = round(normed["context_switches_norm"] * 0.30 * 100)
                 msg_contrib     = round(normed["pending_messages_norm"] * 0.20 * 100)

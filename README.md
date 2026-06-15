@@ -131,10 +131,15 @@ Key differentiators:
 Measures total workload pressure, including time gap between what needs to be done and what time exists.
 
 ```
-Overload = (Task Volume      × 0.25)
-         + (Urgency Signals  × 0.30)
-         + (Energy Penalty   × 0.20)   ← (1 - energy_norm)
-         + (Time Pressure    × 0.25)   ← how far est_hours exceeds free_hours
+Overload = (Task Volume      × 0.15)
+         + (Urgency Signals  × 0.20)
+         + (Energy Penalty   × 0.15)   ← (1 - energy_norm)
+         + (Time Pressure    × 0.50)   ← (est_hours / free_hours) / 4.0, capped at 1.0
+
+Time Pressure is the dominant factor (50%) because the ratio of estimated
+work to available time is the most objective overload signal.
+  2:1 ratio (6h work / 3h free) → time_pressure = 0.50
+  4:1 ratio (12h work / 3h free) → time_pressure = 1.00
 
 Labels:   0–40 = Low · 41–65 = Moderate · 66–85 = High · 86–100 = Critical
 ```

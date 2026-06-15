@@ -23,7 +23,11 @@ def normalise(features: dict) -> dict:
     normed["energy_level"] = features.get("energy_level", "Medium")
     normed["energy_norm"]  = ENERGY_NORM.get(normed["energy_level"], 0.6)
 
-    # Time pressure: 0 when est <= free, 1 when est >= 2× free
+    # Time pressure: linear scale from 0 (est <= free) to 1.0 at est = 4× free.
+    # Using ratio/4.0 instead of (ratio-1) so that:
+    #   2:1 (est=6, free=3) → 0.5  (moderate pressure)
+    #   4:1 (est=12, free=3) → 1.0 (maximum pressure)
+    # This prevents severe mismatches from being masked by low task/urgency counts.
     free = float(features.get("free_hours", 1))
     est  = float(features.get("estimated_hours", 0))
     if est == 0:
@@ -31,7 +35,7 @@ def normalise(features: dict) -> dict:
     elif free == 0:
         normed["time_pressure_norm"] = 1.0
     else:
-        normed["time_pressure_norm"] = min(max((est / free) - 1.0, 0.0), 1.0)
+        normed["time_pressure_norm"] = min((est / max(free, 0.5)) / 4.0, 1.0)
 
     return normed
 
@@ -40,10 +44,15 @@ def overload_score(normed: dict) -> float:
     """Compute Overload Score (0–100) from normalised features.
 
     Weights:
-        task_count      × 0.25  — volume of pending tasks
-        urgency_signals × 0.30  — deadline pressure
-        (1 - energy)    × 0.20  — fatigue penalty
-        time_pressure   × 0.25  — how far estimated work exceeds free hours
+        task_count      × 0.15  — volume of pending tasks
+        urgency_signals × 0.20  — deadline pressure
+        (1 - energy)    × 0.15  — fatigue penalty
+        time_pressure   × 0.50  — capacity gap (dominant factor)
+
+    time_pressure carries 50% weight because the ratio of estimated work
+    to available time is the most objective and severe overload signal.
+    A 4:1 mismatch (12h work, 3h free) should always produce High/Critical
+    overload regardless of task count or urgency.
 
     Args:
         normed: output of normalise().
@@ -52,10 +61,10 @@ def overload_score(normed: dict) -> float:
         Overload score clamped to [0, 100].
     """
     score = (
-        normed["task_count_norm"]      * 0.25 +
-        normed["urgency_signals_norm"] * 0.30 +
-        (1 - normed["energy_norm"])    * 0.20 +
-        normed["time_pressure_norm"]   * 0.25
+        normed["task_count_norm"]      * 0.15 +
+        normed["urgency_signals_norm"] * 0.20 +
+        (1 - normed["energy_norm"])    * 0.15 +
+        normed["time_pressure_norm"]   * 0.50
     ) * 100
     return round(min(score, 100), 1)
 
