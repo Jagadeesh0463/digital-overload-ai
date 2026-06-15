@@ -58,7 +58,9 @@ Low energy today — slept 4 hours.
 Only 3 free hours tonight.
 ```
 
-**Expected output:** High Overload · High AFI · Overcommitted capacity → REDUCE strategy
+**Expected outcome (approximate):**
+- Overload Score: 60–70 &nbsp;•&nbsp; AFI: 50–60 &nbsp;•&nbsp; Capacity Fit: <40%
+- Likely Recommendation: **REDUCE**
 
 ---
 
@@ -231,12 +233,12 @@ Student Input (natural language)
 
 | Layer      | Technology                   |
 |------------|------------------------------|
-| Frontend   | Streamlit                    |
-| Backend    | Python                       |
-| AI / NLP   | Groq API — Llama 3.3 70B     |
-| Charts     | Plotly                       |
-| Testing    | pytest — 32 tests            |
-| Deployment | Streamlit Cloud              |
+| Frontend   | Streamlit       |
+| Backend    | Python          |
+| AI / NLP   | Groq API        |
+| Charts     | Plotly          |
+| Testing    | pytest          |
+| Deployment | Streamlit Cloud |
 
 ---
 
@@ -306,7 +308,7 @@ digital-overload-ai/
   </tr>
 </table>
 
-> **To add screenshots:** run `streamlit run app.py`, capture each section with **Cmd+Shift+4** (Mac) or **Win+Shift+S** (Windows), and save to `docs/screenshots/` using the filenames: `01-home.png`, `02-diagnostics.png`, `03-analysis.png`, `04-recommendations.png`, `05-planner.png`.
+> Screenshots captured from the live application and stored in `docs/screenshots/`.
 
 ---
 
@@ -404,6 +406,20 @@ Total                — 32 passed in 0.02s
 - **Automated testing** — Writing 32 pytest tests covering edge cases in scoring and recommendations
 - **Streamlit deployment** — Building and deploying a multi-section data app on Streamlit Cloud
 - **Metric design** — Creating original metrics (AFI, OPE, Capacity Fit) from first principles
+
+---
+
+## 📄 Resume Highlights
+
+This project demonstrates:
+
+- LLM integration using Groq API
+- Explainable AI system design
+- Custom metric engineering (AFI, OPE, Capacity Fit)
+- Rule-based recommendation systems
+- Automated testing with pytest
+- Streamlit application deployment
+- GitHub Actions CI workflow
 
 ---
 
