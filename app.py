@@ -645,150 +645,45 @@ def main():
                 # 📊 DIAGNOSTICS
                 # ═══════════════════════════════════════════
                 st.markdown("""
-                <div style="border-left:4px solid #3b82f6;padding:4px 0 4px 14px;margin:28px 0 14px 0;">
-                    <span style="color:#7dd3fc;font-size:11px;font-weight:800;letter-spacing:2px;">📊 DIAGNOSTICS</span>
+                <div style="border-left:4px solid #3b82f6;padding:6px 0 6px 14px;margin:28px 0 14px 0;">
+                    <span style="color:#7dd3fc;font-size:13px;font-weight:800;letter-spacing:2px;">📊 DIAGNOSTICS</span>
                 </div>""", unsafe_allow_html=True)
 
-                # 3 Score Metrics in one visual card
+                # 3-score card with severity-colored HTML progress bars (Fix 7)
+                o_col = score_color(scores["overload"], "overload")
+                a_col = score_color(scores["afi"],      "afi")
+                c_col = score_color(scores["capacity"], "capacity")
+                o_pct = min(int(scores["overload"]), 100)
+                a_pct = min(int(scores["afi"]),      100)
+                c_pct = min(int(scores["capacity"]), 100)
+
                 st.markdown('<div style="background:#1e293b;border:1px solid #334155;border-radius:14px;padding:18px 20px;">', unsafe_allow_html=True)
                 c1, c2, c3 = st.columns(3)
                 with c1:
                     st.metric("🔥 Overload Score", f"{scores['overload']:.0f} / 100",
                               colored_label(scores["overload_label"], "overload"))
-                    st.progress(min(scores["overload"] / 100, 1.0))
+                    st.markdown(
+                        f'<div style="background:#0f172a;border-radius:4px;height:6px;margin-top:2px;">'
+                        f'<div style="background:{o_col};width:{o_pct}%;height:6px;border-radius:4px;"></div>'
+                        f'</div>', unsafe_allow_html=True)
                 with c2:
                     st.metric("🧩 AFI Score", f"{scores['afi']:.0f} / 100",
                               colored_label(scores["afi_label"], "afi"))
-                    st.progress(min(scores["afi"] / 100, 1.0))
+                    st.markdown(
+                        f'<div style="background:#0f172a;border-radius:4px;height:6px;margin-top:2px;">'
+                        f'<div style="background:{a_col};width:{a_pct}%;height:6px;border-radius:4px;"></div>'
+                        f'</div>', unsafe_allow_html=True)
                 with c3:
                     st.metric("⏱️ Capacity Fit", f"{scores['capacity']:.0f}%",
                               colored_label(scores["capacity_label"], "capacity"))
-                    st.progress(min(scores["capacity"] / 100, 1.0))
+                    st.markdown(
+                        f'<div style="background:#0f172a;border-radius:4px;height:6px;margin-top:2px;">'
+                        f'<div style="background:{c_col};width:{c_pct}%;height:6px;border-radius:4px;"></div>'
+                        f'</div>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
 
-                # Score Drivers
-                normed = scores["normed"]
-                task_contrib    = round(normed["task_count_norm"]            * 0.15 * 100)
-                urgency_contrib = round(normed["urgency_signals_norm"]      * 0.20 * 100)
-                energy_contrib  = round((1 - normed["energy_norm"])         * 0.15 * 100)
-                time_contrib    = round(normed.get("time_pressure_norm", 0) * 0.50 * 100)
-                domain_contrib  = round(normed["unique_domains_norm"]   * 0.50 * 100)
-                switch_contrib  = round(normed["context_switches_norm"] * 0.30 * 100)
-                msg_contrib     = round(normed["pending_messages_norm"] * 0.20 * 100)
-                free            = features.get("free_hours", 0)
-                est             = features.get("estimated_hours", 0)
-                gap             = round(est - free, 1)
-
-                st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:14px 0 6px 0;">SCORE DRIVERS</p>', unsafe_allow_html=True)
-                sd1, sd2, sd3 = st.columns(3)
-                with sd1:
-                    st.markdown(f"""<div style="background:#1e293b;border-radius:10px;padding:12px 14px;border:1px solid #334155;">
-                        <p style="color:#94a3b8;font-size:10px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">🔥 OVERLOAD</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#ef4444;font-weight:700;">+{task_contrib}</span> &nbsp;Task Volume</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#f97316;font-weight:700;">+{urgency_contrib}</span> &nbsp;Deadline Pressure</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#eab308;font-weight:700;">+{energy_contrib}</span> &nbsp;Low Energy</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#a78bfa;font-weight:700;">+{time_contrib}</span> &nbsp;Time Pressure</p>
-                    </div>""", unsafe_allow_html=True)
-                with sd2:
-                    st.markdown(f"""<div style="background:#1e293b;border-radius:10px;padding:12px 14px;border:1px solid #334155;">
-                        <p style="color:#94a3b8;font-size:10px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">🧩 AFI</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#ef4444;font-weight:700;">+{domain_contrib}</span> &nbsp;Domain Spread</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#f97316;font-weight:700;">+{switch_contrib}</span> &nbsp;Context Switches</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:#eab308;font-weight:700;">+{msg_contrib}</span> &nbsp;Comm Load</p>
-                    </div>""", unsafe_allow_html=True)
-                with sd3:
-                    st.markdown(f"""<div style="background:#1e293b;border-radius:10px;padding:12px 14px;border:1px solid #334155;">
-                        <p style="color:#94a3b8;font-size:10px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">⏱️ CAPACITY</p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Available: <span style="color:#22c55e;font-weight:700;">{free}h</span></p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Estimated: <span style="color:#ef4444;font-weight:700;">{est}h</span></p>
-                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Gap: <span style="color:#f97316;font-weight:700;">{"+" if gap > 0 else ""}{gap}h</span></p>
-                    </div>""", unsafe_allow_html=True)
-
-                # Detected Signals — grouped by severity
-                signals = get_overload_signals(features, scores)
-                if signals:
-                    st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:14px 0 6px 0;">DETECTED SIGNALS</p>', unsafe_allow_html=True)
-                    critical = [(t, d) for e, t, d in signals if e == '🔴']
-                    warning  = [(t, d) for e, t, d in signals if e == '🟠']
-                    attention= [(t, d) for e, t, d in signals if e == '🟡']
-
-                    def _render_group(label: str, color: str, items: list) -> None:
-                        if not items:
-                            return
-                        st.markdown(
-                            f'<p style="color:{color};font-size:10px;font-weight:800;'
-                            f'letter-spacing:1px;margin:8px 0 4px 0;">{label}</p>',
-                            unsafe_allow_html=True,
-                        )
-                        for title, detail in items:
-                            st.markdown(
-                                f'<div style="background:#1e293b;border-left:4px solid {color};'
-                                f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:4px;">'
-                                f'<span style="color:#f8fafc;font-weight:700;font-size:12px;">{title}</span>'
-                                f'<span style="color:#64748b;font-size:11px;"> — {detail}</span>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-
-                    _render_group("🔴 CRITICAL SIGNALS", "#ef4444", critical)
-                    _render_group("🟠 WARNING SIGNALS",  "#f97316", warning)
-                    _render_group("🟡 ATTENTION SIGNALS","#eab308", attention)
-
-                # ═══════════════════════════════════════════
-                # 🧠 ANALYSIS
-                # ═══════════════════════════════════════════
-                st.markdown("""
-                <div style="border-left:4px solid #8b5cf6;padding:4px 0 4px 14px;margin:28px 0 14px 0;">
-                    <span style="color:#c4b5fd;font-size:11px;font-weight:800;letter-spacing:2px;">🧠 ANALYSIS</span>
-                </div>""", unsafe_allow_html=True)
-
-                # AI Summary — in expander
-                summary = generate_ai_summary(features, scores)
-                with st.expander("🧠 AI Analysis Summary", expanded=True):
-                    st.markdown(f'<p style="color:#e2e8f0;font-size:13px;line-height:1.7;margin:0;">{summary}</p>', unsafe_allow_html=True)
-
-                # Workload vs Capacity — Plotly chart
-                free_h     = features.get("free_hours", 0)
-                est_h      = features.get("estimated_hours", 0)
-                gap_h      = round(est_h - free_h, 1)
-                cap_status = scores["capacity_label"]
-                cap_color  = {"Good Fit":"#22c55e","Tight":"#eab308","Poor Fit":"#f97316","Overcommitted":"#ef4444"}.get(cap_status,"#64748b")
-
-                st.markdown('<p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 2px 0;">⏱️ WORKLOAD vs CAPACITY</p>', unsafe_allow_html=True)
-                st.plotly_chart(make_capacity_chart(free_h, est_h, cap_status), width='stretch')
-                st.markdown(
-                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:-8px;margin-bottom:10px;">'
-                    f'<span style="color:#94a3b8;font-size:12px;">Gap: <span style="color:{cap_color};font-weight:700;">{gap_h:+.1f}h</span></span>'
-                    f'<span style="background:{cap_color};color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:4px;">{cap_status}</span>'
-                    f'</div>',
-                    unsafe_allow_html=True,
-                )
-
-                # AFI + Capacity Fit — short cards side by side
-                afi_val     = scores["afi"]
-                afi_lbl     = scores["afi_label"]
-                afi_col     = {"Severe":"#ef4444","High":"#f97316","Moderate":"#eab308","Low":"#22c55e"}.get(afi_lbl,"#64748b")
-                cap_val     = scores["capacity"]
-                cap_lbl     = scores["capacity_label"]
-                cap_col2    = {"Good Fit":"#22c55e","Tight":"#eab308","Poor Fit":"#f97316","Overcommitted":"#ef4444"}.get(cap_lbl,"#64748b")
-                af1, af2    = st.columns(2)
-                with af1:
-                    st.markdown(f"""<div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px 16px;">
-                        <p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 4px 0;">🧩 ATTENTION FRAGMENTATION INDEX</p>
-                        <p style="color:{afi_col};font-size:17px;font-weight:800;margin:0 0 3px 0;">{afi_val:.0f}/100 — {afi_lbl}</p>
-                        <p style="color:#64748b;font-size:12px;margin:0 0 5px 0;">Measures cognitive scatter from domain switching.</p>
-                        <p style="color:#94a3b8;font-size:11px;margin:0;">🟢 Low = Focused &nbsp;·&nbsp; 🔴 Severe = Scattered</p>
-                    </div>""", unsafe_allow_html=True)
-                with af2:
-                    st.markdown(f"""<div style="background:#1e293b;border:1px solid #334155;border-radius:10px;padding:12px 16px;">
-                        <p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 4px 0;">⏱️ CAPACITY FIT</p>
-                        <p style="color:{cap_col2};font-size:17px;font-weight:800;margin:0 0 3px 0;">{cap_val:.0f}% — {cap_lbl}</p>
-                        <p style="color:#64748b;font-size:12px;margin:0 0 5px 0;">Checks if workload fits available time and energy.</p>
-                        <p style="color:#94a3b8;font-size:11px;margin:0;">🟢 Above 70% = Healthy &nbsp;·&nbsp; 🔴 Below 40% = Overcommitted</p>
-                    </div>""", unsafe_allow_html=True)
-
-                # OPE — 3-state logic based on Capacity Fit
-                cap_pct = scores["capacity"]
+                # OPE — moved directly after scores (Fix 4: highest-priority actionable output)
+                cap_pct     = scores["capacity"]
                 afi_val_ope = scores["afi"]
                 if cap_pct < 40 or afi_val_ope > 80:
                     ope_status  = "🔴 AT CAPACITY"
@@ -811,12 +706,121 @@ def main():
                     <p style="color:#94a3b8;font-size:12px;margin:0;">{ope_message}</p>
                 </div>""", unsafe_allow_html=True)
 
+                # Score Drivers — dynamic contribution colors (Fix 9)
+                normed = scores["normed"]
+                task_contrib    = round(normed["task_count_norm"]            * 0.15 * 100)
+                urgency_contrib = round(normed["urgency_signals_norm"]      * 0.20 * 100)
+                energy_contrib  = round((1 - normed["energy_norm"])         * 0.15 * 100)
+                time_contrib    = round(normed.get("time_pressure_norm", 0) * 0.50 * 100)
+                domain_contrib  = round(normed["unique_domains_norm"]   * 0.50 * 100)
+                switch_contrib  = round(normed["context_switches_norm"] * 0.30 * 100)
+                msg_contrib     = round(normed["pending_messages_norm"] * 0.20 * 100)
+                free            = features.get("free_hours", 0)
+                est             = features.get("estimated_hours", 0)
+                gap             = round(est - free, 1)
+
+                def _dc(val: int, high: str) -> str:
+                    """Color a driver contribution by magnitude: high=signal color, mid=muted, low=dim."""
+                    if val >= 8: return high
+                    if val >= 4: return "#94a3b8"
+                    return "#475569"
+
+                st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:14px 0 6px 0;">SCORE DRIVERS</p>', unsafe_allow_html=True)
+                sd1, sd2, sd3 = st.columns(3)
+                with sd1:
+                    st.markdown(f"""<div style="background:#1e293b;border-radius:10px;padding:12px 14px;border:1px solid #334155;">
+                        <p style="color:#94a3b8;font-size:10px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">🔥 OVERLOAD</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(task_contrib,'#ef4444')};font-weight:700;">+{task_contrib}</span> &nbsp;Task Volume</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(urgency_contrib,'#f97316')};font-weight:700;">+{urgency_contrib}</span> &nbsp;Deadline Pressure</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(energy_contrib,'#eab308')};font-weight:700;">+{energy_contrib}</span> &nbsp;Low Energy</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(time_contrib,'#a78bfa')};font-weight:700;">+{time_contrib}</span> &nbsp;Time Pressure</p>
+                    </div>""", unsafe_allow_html=True)
+                with sd2:
+                    st.markdown(f"""<div style="background:#1e293b;border-radius:10px;padding:12px 14px;border:1px solid #334155;">
+                        <p style="color:#94a3b8;font-size:10px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">🧩 AFI</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(domain_contrib,'#ef4444')};font-weight:700;">+{domain_contrib}</span> &nbsp;Domain Spread</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(switch_contrib,'#f97316')};font-weight:700;">+{switch_contrib}</span> &nbsp;Context Switches</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;"><span style="color:{_dc(msg_contrib,'#eab308')};font-weight:700;">+{msg_contrib}</span> &nbsp;Comm Load</p>
+                    </div>""", unsafe_allow_html=True)
+                with sd3:
+                    gap_col = "#ef4444" if gap > 0 else "#22c55e"
+                    st.markdown(f"""<div style="background:#1e293b;border-radius:10px;padding:12px 14px;border:1px solid #334155;">
+                        <p style="color:#94a3b8;font-size:10px;font-weight:700;margin:0 0 6px 0;letter-spacing:1px;">⏱️ CAPACITY</p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Available: <span style="color:#22c55e;font-weight:700;">{free}h</span></p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Estimated: <span style="color:#ef4444;font-weight:700;">{est}h</span></p>
+                        <p style="color:#f8fafc;margin:3px 0;font-size:13px;">Gap: <span style="color:{gap_col};font-weight:700;">{"+" if gap > 0 else ""}{gap}h</span></p>
+                    </div>""", unsafe_allow_html=True)
+
+                # Detected Signals — wrapped in card container (Fix 5), headers 12px (Fix 6)
+                signals = get_overload_signals(features, scores)
+                if signals:
+                    critical  = [(t, d) for e, t, d in signals if e == '🔴']
+                    warning   = [(t, d) for e, t, d in signals if e == '🟠']
+                    attention = [(t, d) for e, t, d in signals if e == '🟡']
+
+                    st.markdown('<div style="background:#0f172a;border:1px solid #1e293b;border-radius:12px;padding:14px 16px;margin-top:10px;">', unsafe_allow_html=True)
+                    st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:0 0 8px 0;">DETECTED SIGNALS</p>', unsafe_allow_html=True)
+
+                    def _render_group(label: str, color: str, items: list) -> None:
+                        if not items:
+                            return
+                        st.markdown(
+                            f'<p style="color:{color};font-size:12px;font-weight:800;'
+                            f'letter-spacing:1px;margin:8px 0 4px 0;">{label}</p>',
+                            unsafe_allow_html=True,
+                        )
+                        for title, detail in items:
+                            st.markdown(
+                                f'<div style="background:#1e293b;border-left:4px solid {color};'
+                                f'border-radius:0 8px 8px 0;padding:7px 12px;margin-bottom:4px;">'
+                                f'<span style="color:#f8fafc;font-weight:700;font-size:12px;">{title}</span>'
+                                f'<span style="color:#64748b;font-size:11px;"> — {detail}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+
+                    _render_group("🔴 CRITICAL SIGNALS", "#ef4444", critical)
+                    _render_group("🟠 WARNING SIGNALS",  "#f97316", warning)
+                    _render_group("🟡 ATTENTION SIGNALS","#eab308", attention)
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                # ═══════════════════════════════════════════
+                # 🧠 ANALYSIS
+                # ═══════════════════════════════════════════
+                st.markdown("""
+                <div style="border-left:4px solid #8b5cf6;padding:6px 0 6px 14px;margin:28px 0 14px 0;">
+                    <span style="color:#c4b5fd;font-size:13px;font-weight:800;letter-spacing:2px;">🧠 ANALYSIS</span>
+                </div>""", unsafe_allow_html=True)
+
+                # AI Summary — collapsed by default (Fix 8: always-expanded expander removed)
+                summary = generate_ai_summary(features, scores)
+                with st.expander("🧠 AI Analysis Summary — click to expand", expanded=False):
+                    st.markdown(f'<p style="color:#e2e8f0;font-size:13px;line-height:1.7;margin:0;">{summary}</p>', unsafe_allow_html=True)
+
+                # Workload vs Capacity chart (Fix 1: use_container_width)
+                free_h     = features.get("free_hours", 0)
+                est_h      = features.get("estimated_hours", 0)
+                gap_h      = round(est_h - free_h, 1)
+                cap_status = scores["capacity_label"]
+                cap_color  = {"Good Fit":"#22c55e","Tight":"#eab308","Poor Fit":"#f97316","Overcommitted":"#ef4444"}.get(cap_status,"#64748b")
+
+                st.markdown('<p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:10px 0 2px 0;">⏱️ WORKLOAD vs CAPACITY</p>', unsafe_allow_html=True)
+                st.plotly_chart(make_capacity_chart(free_h, est_h, cap_status), use_container_width=True)
+                st.markdown(
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:-8px;margin-bottom:10px;">'
+                    f'<span style="color:#94a3b8;font-size:12px;">Gap: <span style="color:{cap_color};font-weight:700;">{gap_h:+.1f}h</span></span>'
+                    f'<span style="background:{cap_color};color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:4px;">{cap_status}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
+                # Fix 2: duplicate AFI + Capacity Fit cards removed — scores already in Diagnostics
+
                 # ═══════════════════════════════════════════
                 # 🎯 RECOMMENDATIONS
                 # ═══════════════════════════════════════════
                 st.markdown("""
-                <div style="border-left:4px solid #22c55e;padding:4px 0 4px 14px;margin:28px 0 14px 0;">
-                    <span style="color:#86efac;font-size:11px;font-weight:800;letter-spacing:2px;">🎯 RECOMMENDATIONS</span>
+                <div style="border-left:4px solid #22c55e;padding:6px 0 6px 14px;margin:28px 0 14px 0;">
+                    <span style="color:#86efac;font-size:13px;font-weight:800;letter-spacing:2px;">🎯 RECOMMENDATIONS</span>
                 </div>""", unsafe_allow_html=True)
 
                 # Action Plan
@@ -840,9 +844,15 @@ def main():
                             unsafe_allow_html=True,
                         )
 
-                # Top Priorities + Safe to Defer
+                # Priorities — Fix 10: hide Safe to Defer column for FOCUS strategy
                 top_p, safe_d = get_priorities(tasks, action, features)
-                pr_col, df_col = st.columns(2)
+                show_defer    = action in ["REDUCE", "DEFER", "SPLIT"]
+
+                if show_defer:
+                    pr_col, df_col = st.columns(2)
+                else:
+                    pr_col = st.columns(1)[0]
+
                 with pr_col:
                     st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:12px 0 6px 0;">🎯 TODAY\'S TOP PRIORITIES</p>', unsafe_allow_html=True)
                     if top_p:
@@ -857,40 +867,36 @@ def main():
                             )
                     else:
                         st.caption("No tasks extracted.")
-                with df_col:
-                    st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:12px 0 6px 0;">🕒 SAFE TO DEFER</p>', unsafe_allow_html=True)
-                    if safe_d:
-                        for item in safe_d:
-                            st.markdown(
-                                f'<div style="background:#1e293b;border-left:4px solid #475569;'
-                                f'border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:5px;">'
-                                f'<span style="color:#94a3b8;font-size:13px;">→ {item["name"]}</span><br>'
-                                f'<span style="color:#64748b;font-size:11px;">{item["reason"]}</span>'
-                                f'</div>',
-                                unsafe_allow_html=True,
-                            )
-                    elif action in ["REDUCE", "DEFER"]:
-                        st.caption("No deferrable tasks identified.")
-                    else:
-                        st.caption("No deferral needed — load is manageable.")
+
+                if show_defer:
+                    with df_col:
+                        st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:12px 0 6px 0;">🕒 SAFE TO DEFER</p>', unsafe_allow_html=True)
+                        if safe_d:
+                            for item in safe_d:
+                                st.markdown(
+                                    f'<div style="background:#1e293b;border-left:4px solid #475569;'
+                                    f'border-radius:0 8px 8px 0;padding:8px 12px;margin-bottom:5px;">'
+                                    f'<span style="color:#94a3b8;font-size:13px;">→ {item["name"]}</span><br>'
+                                    f'<span style="color:#64748b;font-size:11px;">{item["reason"]}</span>'
+                                    f'</div>',
+                                    unsafe_allow_html=True,
+                                )
+                        else:
+                            st.caption("No deferrable tasks identified.")
 
                 # ═══════════════════════════════════════════
                 # 📅 PLANNING
                 # ═══════════════════════════════════════════
                 st.markdown("""
-                <div style="border-left:4px solid #f59e0b;padding:4px 0 4px 14px;margin:28px 0 14px 0;">
-                    <span style="color:#fcd34d;font-size:11px;font-weight:800;letter-spacing:2px;">📅 PLANNING</span>
+                <div style="border-left:4px solid #f59e0b;padding:6px 0 6px 14px;margin:28px 0 14px 0;">
+                    <span style="color:#fcd34d;font-size:13px;font-weight:800;letter-spacing:2px;">📅 PLANNING</span>
                 </div>""", unsafe_allow_html=True)
 
-                # Charts
-                col_l, col_r = st.columns(2)
-                with col_l:
-                    st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:0 0 4px 0;">OVERLOAD GAUGE</p>', unsafe_allow_html=True)
-                    st.plotly_chart(make_gauge(scores["overload"], scores["overload_label"], "overload"), width='stretch')
-                with col_r:
+                # Fix 3: Overload Gauge removed — score already shown in Diagnostics card
+                # Domain Breakdown — full width (Fix 1: use_container_width)
+                if tasks:
                     st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:0 0 4px 0;">DOMAIN BREAKDOWN</p>', unsafe_allow_html=True)
-                    if tasks:
-                        st.plotly_chart(make_domain_chart(tasks), width='stretch')
+                    st.plotly_chart(make_domain_chart(tasks), use_container_width=True)
 
                 # Day Plan
                 if day_plan:
@@ -1034,7 +1040,7 @@ def main():
                 showlegend=False,
             )
             st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:0 0 4px 0;">OVERLOAD TREND (oldest → latest)</p>', unsafe_allow_html=True)
-            st.plotly_chart(fig_trend, width='stretch')
+            st.plotly_chart(fig_trend, use_container_width=True)
 
         for i, h in enumerate(history):
             with st.expander(
