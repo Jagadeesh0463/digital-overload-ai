@@ -119,7 +119,7 @@ This is why AFI and Capacity Fit exist as separate dimensions.
 
 ## How to Use for Testing
 
-1. Click demo button in app — Try Priya / Try Ravi / Try Divya
+1. Click demo button in app — 😵 Overloaded Student (Priya) / 📚 Exam Sprint (Ravi) / 💼 Club Leader (Divya)
 2. Click Analyze My Workload
 3. Compare output scores against expected values above
 4. Verify action plan matches expected action

@@ -4,7 +4,7 @@
 > **Understand your workload pressure before your day falls apart — not after.**
 
 [![Run Tests](https://github.com/Jagadeesh0463/digital-overload-ai/actions/workflows/tests.yml/badge.svg)](https://github.com/Jagadeesh0463/digital-overload-ai/actions/workflows/tests.yml)
-![Tests](https://img.shields.io/badge/tests-32%20passed-22c55e?style=flat-square)
+![Tests](https://img.shields.io/badge/tests-37%20passed-22c55e?style=flat-square)
 ![Python](https://img.shields.io/badge/python-3.11+-3b82f6?style=flat-square)
 ![Streamlit](https://img.shields.io/badge/streamlit-1.58-ff4b4b?style=flat-square)
 ![Groq](https://img.shields.io/badge/groq-llama--3.3--70b-f97316?style=flat-square)
@@ -25,7 +25,7 @@
 | 💡 Explainable Recommendations | 16-row deterministic rule matrix → FOCUS / DEFER / SPLIT / REDUCE |
 | 🔍 Overload Signal Detection | Named pattern recognition across tasks, energy, time, and messages |
 | 🗓️ AI Day Planner | Energy-adjusted time blocks grouped by domain priority |
-| ✅ 32 Automated Tests | 13 scoring tests + 19 recommender tests, all passing |
+| ✅ 37 Automated Tests | 13 scoring + 19 recommender + 5 planner tests, all passing |
 
 ---
 
@@ -255,7 +255,8 @@ digital-overload-ai/
 ├── utils.py                 Constants, thresholds, colour maps
 ├── tests/
 │   ├── test_scoring.py      13 unit tests for scoring formulas
-│   └── test_recommender.py  19 unit tests for rule matrix
+│   ├── test_recommender.py  19 unit tests for rule matrix
+│   └── test_planner.py      5 unit tests for day planner
 ├── docs/
 │   ├── PROJECT_OVERVIEW.md  Deep explanation of all concepts
 │   ├── SAMPLE_INPUTS.md     3 student personas with expected outputs
@@ -271,9 +272,9 @@ digital-overload-ai/
 ## 📸 Screenshots
 
 <p align="center">
-  <img src="docs/screenshots/01-home.png" alt="Input Screen" width="800"/>
+  <img src="docs/screenshots/01-workload-dashboard.png" alt="Full Workload Dashboard" width="800"/>
   <br/>
-  <sub><b>Input Screen</b> — Paste any natural-language workload description. No forms, no checkboxes.</sub>
+  <sub><b>Workload Dashboard</b> — Complete analysis view: input, scores, signals, recommendations, and day plan.</sub>
 </p>
 
 ---
@@ -293,20 +294,11 @@ digital-overload-ai/
   </tr>
 </table>
 
-<table>
-  <tr>
-    <td align="center" width="50%">
-      <img src="docs/screenshots/04-recommendations.png" alt="Recommendations & Priority Plan" width="100%"/>
-      <br/>
-      <sub><b>Recommendations & Priority Plan</b><br/>FOCUS / DEFER / SPLIT / REDUCE strategy with per-task reasoning</sub>
-    </td>
-    <td align="center" width="50%">
-      <img src="docs/screenshots/05-planner.png" alt="AI Day Planner" width="100%"/>
-      <br/>
-      <sub><b>AI Day Planner</b><br/>Urgency-sorted time blocks · smart breaks · deferred task list</sub>
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="docs/screenshots/04-planner.png" alt="AI Day Planner" width="800"/>
+  <br/>
+  <sub><b>AI Day Planner</b> — Urgency-sorted time blocks · smart breaks · deferred task list</sub>
+</p>
 
 > Screenshots captured from the live application and stored in `docs/screenshots/`.
 
@@ -360,7 +352,7 @@ pytest tests/ -v
 test_scoring.py      — 13 passed
 test_recommender.py  — 19 passed
 ─────────────────────────────────
-Total                — 32 passed in 0.02s
+Total                — 37 passed in 0.03s
 ```
 
 ---
@@ -389,7 +381,7 @@ Total                — 32 passed in 0.02s
 
 | Metric | Value |
 |--------|-------|
-| Automated Tests | 32 (13 scoring + 19 recommender) |
+| Automated Tests | 37 (13 scoring + 19 recommender + 5 planner) |
 | Recommendation Rules | 16 |
 | Extracted Signals | 8 |
 | Diagnostic Scores | 3 |

@@ -179,7 +179,7 @@ Student can compare scores before and after dropping a task.
 ### FOCUS
 Student works single-task mode.
 No switching. Notifications off.
-90-minute blocks. Highest urgency first.
+45–90 min blocks depending on energy level. Highest urgency first.
 
 ### DEFER
 Student moves non-urgent tasks to tomorrow.

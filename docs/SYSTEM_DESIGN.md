@@ -169,9 +169,10 @@ Two test files covering core logic:
     - Edge cases (zero input, over cap)
 
     test_recommender.py — 19 tests
+    test_planner.py     — 5 tests
     - All overload levels
     - All capacity levels
     - AFI override tests
     - 3 persona verification tests
 
-Total: 32 tests — all passing in 0.03s
+Total: 37 tests — all passing in 0.03s

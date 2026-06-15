@@ -50,11 +50,15 @@ Ravi gets FOCUS. Divya gets REDUCE + SPLIT.
 
 ### Score 1 — Overload Score (0–100)
 
-    Overload = (task_count x 0.35) + (urgency x 0.35) + ((1-energy) x 0.30) x 100
+    Overload = (task_count      × 0.15)
+             + (urgency_signals × 0.20)
+             + ((1 - energy)    × 0.15)
+             + (time_pressure   × 0.50)   ← est_hours / free_hours, capped at 1.0
 
-Weights justified by cognitive load research:
-- task_count and urgency = 0.35 each (primary working memory stressors)
-- energy = 0.30 (capacity modulator)
+Weights justified:
+- time_pressure = 0.50 (dominant factor — ratio of work to available time)
+- urgency = 0.20 (deadline pressure)
+- task_count and energy_penalty = 0.15 each (volume and fatigue modifiers)
 
 Labels: 0-40 Low | 41-65 Moderate | 66-85 High | 86-100 Critical
 
