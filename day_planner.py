@@ -144,12 +144,12 @@ def build_day_plan(tasks: list, free_hours: float,
     if energy_level == "Low":
         max_block_min  = 45
         break_min      = 10
-    elif energy_level == "Medium":
-        max_block_min  = 60
-        break_min      = 12
-    else:  # High
+    elif energy_level == "High":
         max_block_min  = 90
         break_min      = 15
+    else:  # Medium (default — catches unexpected values)
+        max_block_min  = 60
+        break_min      = 12
 
     max_block_h  = max_block_min / 60.0
     break_h      = break_min / 60.0

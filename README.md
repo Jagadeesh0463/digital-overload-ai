@@ -263,17 +263,47 @@ digital-overload-ai/
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
-| Input Page | Analysis Results |
-|------------|-----------------|
-| ![Input](docs/screenshots/home.png) | ![Results](docs/screenshots/analysis.png) |
+<p align="center">
+  <img src="docs/screenshots/01-home.png" alt="Input Screen" width="800"/>
+  <br/>
+  <sub><b>Input Screen</b> — Paste any natural-language workload description. No forms, no checkboxes.</sub>
+</p>
 
-| Recommendations | Day Planner |
-|-----------------|-------------|
-| ![Plan](docs/screenshots/recommendations.png) | ![Day](docs/screenshots/planner.png) |
+---
 
-> To add screenshots: run `streamlit run app.py`, capture each section, and save to `docs/screenshots/`.
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/02-diagnostics.png" alt="3-Score Diagnostic Dashboard" width="100%"/>
+      <br/>
+      <sub><b>3-Score Diagnostic Dashboard</b><br/>Overload Score · AFI · Capacity Fit with severity labels</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/03-analysis.png" alt="Signals & AI Analysis" width="100%"/>
+      <br/>
+      <sub><b>Detected Signals & AI Analysis</b><br/>Overload patterns grouped by severity · AI plain-English summary</sub>
+    </td>
+  </tr>
+</table>
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/04-recommendations.png" alt="Recommendations & Priority Plan" width="100%"/>
+      <br/>
+      <sub><b>Recommendations & Priority Plan</b><br/>FOCUS / DEFER / SPLIT / REDUCE strategy with per-task reasoning</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src="docs/screenshots/05-planner.png" alt="AI Day Planner" width="100%"/>
+      <br/>
+      <sub><b>AI Day Planner</b><br/>Urgency-sorted time blocks · smart breaks · deferred task list</sub>
+    </td>
+  </tr>
+</table>
+
+> **To add screenshots:** run `streamlit run app.py`, capture each section with **Cmd+Shift+4** (Mac) or **Win+Shift+S** (Windows), and save to `docs/screenshots/` using the filenames: `01-home.png`, `02-diagnostics.png`, `03-analysis.png`, `04-recommendations.png`, `05-planner.png`.
 
 ---
 

@@ -221,6 +221,93 @@ def make_gauge(value: float, label: str, kind: str) -> go.Figure:
     return fig
 
 
+def make_capacity_chart(free_h: float, est_h: float, cap_status: str) -> go.Figure:
+    """Build a Plotly horizontal bar chart comparing estimated workload vs available time.
+
+    Workload bar is colour-coded by capacity status (green→yellow→orange→red).
+    Available Time bar is always blue. A vertical dashed reference line marks
+    the capacity limit when workload exceeds available time.
+
+    Args:
+        free_h: available hours today.
+        est_h: estimated total hours of work.
+        cap_status: capacity label — "Good Fit", "Tight", "Poor Fit", "Overcommitted".
+
+    Returns:
+        Plotly Figure object ready for st.plotly_chart().
+    """
+    workload_color = {
+        "Good Fit":     "#22c55e",
+        "Tight":        "#eab308",
+        "Poor Fit":     "#f97316",
+        "Overcommitted":"#ef4444",
+    }.get(cap_status, "#64748b")
+
+    max_val = max(est_h, free_h, 1) * 1.2  # 20% right padding for labels
+
+    fig = go.Figure()
+
+    # Available Time bar — always blue
+    fig.add_trace(go.Bar(
+        x=[free_h],
+        y=["Available Time"],
+        orientation="h",
+        marker=dict(color="#3b82f6", line=dict(width=0)),
+        text=[f"  {free_h}h"],
+        textposition="outside",
+        textfont=dict(color="#93c5fd", size=12, family="Arial"),
+        showlegend=False,
+    ))
+
+    # Estimated Workload bar — colour by severity
+    fig.add_trace(go.Bar(
+        x=[est_h],
+        y=["Estimated Workload"],
+        orientation="h",
+        marker=dict(color=workload_color, line=dict(width=0)),
+        text=[f"  {est_h}h"],
+        textposition="outside",
+        textfont=dict(color=workload_color, size=12, family="Arial"),
+        showlegend=False,
+    ))
+
+    # Vertical dashed line at capacity limit (only when workload exceeds it)
+    if est_h > free_h and free_h > 0:
+        fig.add_vline(
+            x=free_h,
+            line_dash="dash",
+            line_color="#3b82f6",
+            line_width=1.5,
+            annotation_text="capacity limit",
+            annotation_font_color="#3b82f6",
+            annotation_font_size=10,
+            annotation_position="top right",
+        )
+
+    fig.update_layout(
+        height=160,
+        margin=dict(l=0, r=60, t=16, b=10),
+        paper_bgcolor="rgba(0,0,0,0)",
+        plot_bgcolor="rgba(0,0,0,0)",
+        xaxis=dict(
+            range=[0, max_val],
+            showgrid=True,
+            gridcolor="#1e293b",
+            gridwidth=1,
+            ticksuffix="h",
+            tickfont=dict(color="#64748b", size=11),
+            color="#64748b",
+            zeroline=False,
+        ),
+        yaxis=dict(
+            tickfont=dict(color="#94a3b8", size=11),
+            color="#94a3b8",
+        ),
+        bargap=0.35,
+    )
+    return fig
+
+
 def make_domain_chart(tasks: list) -> go.Figure:
     """Build a Plotly horizontal bar chart showing estimated hours per task domain.
 
@@ -660,34 +747,22 @@ def main():
                 with st.expander("🧠 AI Analysis Summary", expanded=True):
                     st.markdown(f'<p style="color:#e2e8f0;font-size:13px;line-height:1.7;margin:0;">{summary}</p>', unsafe_allow_html=True)
 
-                # Workload vs Capacity visual bars
-                free_h    = features.get("free_hours", 0)
-                est_h     = features.get("estimated_hours", 0)
-                gap_h     = round(est_h - free_h, 1)
+                # Workload vs Capacity — Plotly chart
+                free_h     = features.get("free_hours", 0)
+                est_h      = features.get("estimated_hours", 0)
+                gap_h      = round(est_h - free_h, 1)
                 cap_status = scores["capacity_label"]
                 cap_color  = {"Good Fit":"#22c55e","Tight":"#eab308","Poor Fit":"#f97316","Overcommitted":"#ef4444"}.get(cap_status,"#64748b")
-                avail_pct  = min(100, int((free_h / est_h * 100) if est_h > 0 else 100))
-                st.markdown(f"""<div style="background:#1e293b;border:1px solid #334155;border-radius:12px;padding:14px 18px;margin-bottom:10px;">
-                    <p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 10px 0;">⏱️ WORKLOAD vs CAPACITY</p>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-                        <span style="color:#94a3b8;font-size:12px;">Estimated Workload</span>
-                        <span style="color:#ef4444;font-weight:700;font-size:12px;">{est_h}h</span>
-                    </div>
-                    <div style="background:#334155;border-radius:4px;height:8px;margin-bottom:8px;">
-                        <div style="background:#ef4444;border-radius:4px;height:8px;width:100%;"></div>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
-                        <span style="color:#94a3b8;font-size:12px;">Available Time</span>
-                        <span style="color:#22c55e;font-weight:700;font-size:12px;">{free_h}h</span>
-                    </div>
-                    <div style="background:#334155;border-radius:4px;height:8px;margin-bottom:10px;">
-                        <div style="background:#22c55e;border-radius:4px;height:8px;width:{avail_pct}%;"></div>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="color:#94a3b8;font-size:12px;">Gap: <span style="color:#f97316;font-weight:700;">{gap_h:+.1f}h</span></span>
-                        <span style="background:{cap_color};color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:4px;">{cap_status}</span>
-                    </div>
-                </div>""", unsafe_allow_html=True)
+
+                st.markdown('<p style="color:#64748b;font-size:10px;font-weight:700;letter-spacing:1px;margin:0 0 2px 0;">⏱️ WORKLOAD vs CAPACITY</p>', unsafe_allow_html=True)
+                st.plotly_chart(make_capacity_chart(free_h, est_h, cap_status), width='stretch')
+                st.markdown(
+                    f'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:-8px;margin-bottom:10px;">'
+                    f'<span style="color:#94a3b8;font-size:12px;">Gap: <span style="color:{cap_color};font-weight:700;">{gap_h:+.1f}h</span></span>'
+                    f'<span style="background:{cap_color};color:white;font-size:10px;font-weight:700;padding:2px 10px;border-radius:4px;">{cap_status}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True,
+                )
 
                 # AFI + Capacity Fit — short cards side by side
                 afi_val     = scores["afi"]
@@ -819,10 +894,81 @@ def main():
 
                 # Day Plan
                 if day_plan:
-                    st.markdown('<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;margin:14px 0 6px 0;">🗓️ SUGGESTED DAY STRUCTURE</p>', unsafe_allow_html=True)
-                    df = pd.DataFrame(day_plan)[["time", "domain", "activity", "duration"]]
-                    df.columns = ["Time Slot", "Domain", "Activity", "Duration"]
-                    st.dataframe(df, width='stretch', hide_index=True)
+                    energy_lbl   = scores["normed"]["energy_level"]
+                    block_cap    = {"Low": "45 min", "Medium": "60 min", "High": "90 min"}.get(energy_lbl, "60 min")
+                    work_rows    = [r for r in day_plan if r["domain"] not in ("Break", "Rest", "Deferred")]
+                    total_sched  = sum(
+                        int(r["duration"].replace(" min", ""))
+                        for r in work_rows if r.get("duration", "—") != "—"
+                    )
+                    total_avail  = int(features.get("free_hours", 0) * 60)
+
+                    st.markdown(
+                        f'<p style="color:#64748b;font-size:11px;font-weight:700;letter-spacing:1px;'
+                        f'margin:14px 0 4px 0;">🗓️ SUGGESTED DAY STRUCTURE</p>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown(
+                        f'<p style="color:#475569;font-size:11px;margin:0 0 8px 0;">'
+                        f'Energy: <span style="color:#e2e8f0;font-weight:700;">{energy_lbl}</span>'
+                        f' &nbsp;·&nbsp; Block cap: <span style="color:#e2e8f0;font-weight:700;">{block_cap}</span>'
+                        f' &nbsp;·&nbsp; Scheduled: <span style="color:#22c55e;font-weight:700;">{total_sched} min</span>'
+                        f' of <span style="color:#94a3b8;">{total_avail} min</span> available</p>',
+                        unsafe_allow_html=True,
+                    )
+
+                    for row in day_plan:
+                        dom     = row.get("domain", "")
+                        color   = row.get("color", "#334155")
+                        time_s  = row.get("time", "")
+                        act     = row.get("activity", "")
+                        dur     = row.get("duration", "—")
+
+                        if dom == "Break":
+                            st.markdown(
+                                f'<div style="background:#1a2332;border-left:3px solid #334155;'
+                                f'border-radius:0 6px 6px 0;padding:6px 12px;margin-bottom:3px;'
+                                f'display:flex;justify-content:space-between;">'
+                                f'<span style="color:#475569;font-size:11px;font-style:italic;">'
+                                f'{time_s} &nbsp;·&nbsp; {act}</span>'
+                                f'<span style="color:#334155;font-size:11px;">{dur}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+                        elif dom == "Deferred":
+                            st.markdown(
+                                f'<div style="background:#1e293b;border:1px dashed #475569;'
+                                f'border-radius:6px;padding:7px 12px;margin-top:4px;">'
+                                f'<span style="color:#64748b;font-size:10px;font-weight:700;'
+                                f'letter-spacing:1px;">⏭ DEFERRED — NEXT SESSION</span><br/>'
+                                f'<span style="color:#94a3b8;font-size:12px;">{act}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+                        elif dom == "Rest":
+                            st.markdown(
+                                f'<div style="background:#1e293b;border-top:1px solid #334155;'
+                                f'padding:6px 12px;margin-top:4px;border-radius:6px;">'
+                                f'<span style="color:#475569;font-size:11px;">{time_s} &nbsp;·&nbsp; {act}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
+                        else:
+                            is_urgent = "⚡" in act
+                            time_color = "#fbbf24" if is_urgent else "#64748b"
+                            st.markdown(
+                                f'<div style="background:#1e293b;border-left:4px solid {color};'
+                                f'border-radius:0 8px 8px 0;padding:8px 14px;margin-bottom:3px;">'
+                                f'<div style="display:flex;justify-content:space-between;align-items:center;">'
+                                f'<span style="color:{time_color};font-size:11px;font-weight:600;">{time_s}</span>'
+                                f'<span style="color:#475569;font-size:10px;font-weight:700;'
+                                f'background:#0f172a;padding:2px 8px;border-radius:4px;">{dom.upper()}</span>'
+                                f'</div>'
+                                f'<span style="color:#e2e8f0;font-size:13px;font-weight:600;">{act}</span>'
+                                f'<span style="color:#64748b;font-size:11px;"> &nbsp;·&nbsp; {dur}</span>'
+                                f'</div>',
+                                unsafe_allow_html=True,
+                            )
 
                 # ── CSV EXPORT ──
                 import io
